@@ -1,0 +1,9 @@
+[
+  {
+    "id": "saas-001-booking",
+    "name": "Frizerski salon booking",
+    "techStack": ["Next.js", "Supabase", "Stripe"],
+    "lessons": "Cal.com inspired calendar",
+    "metrics": {"mrr": 0, "users": 0}
+  }
+]

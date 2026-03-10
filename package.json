@@ -1,0 +1,26 @@
+{
+  "name": "saas-factory",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "type-check": "turbo run type-check"
+  },
+  "devDependencies": {
+    "eslint": "^8",
+    "prettier": "^3.0.0",
+    "turbo": "latest",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.1.0",
+  "workspaces": [
+    "apps/*",
+    "blocks/*",
+    "packages/*",
+    "factory-brain",
+    "factory-dashboard"
+  ]
+}

@@ -1,0 +1,1 @@
+export { POST } from '@saas-factory/blocks-payments/api/webhooks/route';
