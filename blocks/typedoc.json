@@ -1,0 +1,24 @@
+{
+  "name": "Blocks",
+  "mode": "modules",
+  "out": "../../docs/api",
+  "theme": "default",
+  "excludePrivate": true,
+  "excludeInternals": true,
+  "excludeExternals": false,
+  "navigation": {
+    "includeCategories": true,
+    "includeFolders": true
+  },
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Authentication",
+    "Database",
+    "Payments",
+    "Emails",
+    "Components",
+    "Hooks",
+    "Libraries",
+    "*"
+  ]
+}

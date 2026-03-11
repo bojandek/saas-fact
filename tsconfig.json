@@ -21,7 +21,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@saas-factory/*": ["./packages/*/src/*"]
+      "@saas-factory/core/*": ["./packages/core/src/*"],
+      "@saas-factory/db/*": ["./packages/db/src/*"],
+      "@saas-factory/ui/*": ["./packages/ui/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -7,13 +7,32 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "test:ui": "turbo run test:ui",
+    "test:watch": "turbo run test --watch",
+    "coverage": "turbo run coverage",
+    "e2e": "turbo run e2e",
+    "docs": "typedoc --config blocks/typedoc.json",
+    "docs:serve": "http-server docs/api -c-1 -o -p 8080",
+    "docs:api": "echo 'OpenAPI spec available at docs/openapi.yaml'"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/ui": "^4.0.18",
     "eslint": "^8",
+    "http-server": "^14.1.1",
+    "jsdom": "^28.1.0",
     "prettier": "^3.0.0",
+    "tsx": "^4.21.0",
     "turbo": "latest",
-    "typescript": "^5"
+    "typedoc": "^0.25.0",
+    "typescript": "^5",
+    "vite": "^5.4.8",
+    "vitest": "1.6.0"
   },
   "packageManager": "pnpm@9.1.0",
   "workspaces": [

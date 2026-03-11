@@ -1,0 +1,40 @@
+name: Deploy to Coolify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/saas-001-booking/**'
+      - 'blocks/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Coolify
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK" ]; then
+            echo "COOLIFY_WEBHOOK secret not set. Skipping deployment."
+            exit 0
+          fi
+          
+          curl -X POST "$COOLIFY_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"branch\": \"main\",
+              \"commit\": \"${{ github.sha }}\",
+              \"author\": \"${{ github.actor }}\"
+            }"
+        continue-on-error: true
+
+      - name: Deployment notification
+        run: echo "Deployment triggered for commit ${{ github.sha }}"

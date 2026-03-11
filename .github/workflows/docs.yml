@@ -1,0 +1,93 @@
+name: Generate & Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'blocks/**'
+      - 'docs/**'
+      - 'package.json'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'blocks/**'
+      - 'docs/**'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.1.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate TypeDoc documentation
+        run: pnpm docs
+
+      - name: Validate OpenAPI spec
+        run: |
+          # Simple YAML validation
+          if command -v yamllint &> /dev/null; then
+            yamllint -d relaxed docs/openapi.yaml
+          fi
+
+      - name: Archive documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-documentation
+          path: docs/
+          retention-days: 30
+
+      - name: Deploy docs to GitHub Pages (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          cname: docs.yourapp.com
+
+      - name: Comment PR with docs link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📚 API Documentation has been generated!\n\nView the artifacts to see the latest docs.'
+            })
+
+      - name: Check documentation changes
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "📖 Documentation updated"
+          echo "- TypeDoc generated from TypeScript sources"
+          echo "- OpenAPI spec available in docs/openapi.yaml"
+          echo "- See artifacts for full documentation"

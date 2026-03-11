@@ -1,36 +1,48 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from './lib/supabase-client'
 import { cookies } from 'next/headers'
 
-import type { Database } from '@saas-factory/db'
-
+/**
+ * Middleware za zaštitu ruta - provjerava autentifikaciju
+ */
 export async function middleware(request: NextRequest) {
-  const supabase = createServerComponentClient<Database>({ cookies })
+  const requestHeaders = new Headers(request.headers)
+
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(cookieStore)
 
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Redirect to login if no session
   if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Optional: Check tenant_id in session.user.user_metadata
-  const tenantId = session.user.user_metadata?.tenant_id
-  if (!tenantId && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/setup-tenant', request.url))
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', session.user.id)
+    .single()
+
+  if (userError || !user) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  return NextResponse.next({
+  requestHeaders.set('x-user-id', user.id)
+  requestHeaders.set('x-tenant-id', user.tenant_id)
+  requestHeaders.set('x-user-role', user.role)
+
+  const response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   })
+
+  return response
 }
 
 export const config = {
-  matcher: [
-    '/((?!login|register|api|public|_next|_vercel|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)).*',
-  ],
+  matcher: ['/dashboard/:path*', '/api/admin/:path*', '/api/user/:path*'],
 }

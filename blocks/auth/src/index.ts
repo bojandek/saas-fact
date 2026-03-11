@@ -1,5 +1,7 @@
 export { useAuth } from './hooks/useAuth'
+export { AuthProvider, useAuthContext } from './components/AuthProvider'
 export { LoginForm } from './components/LoginForm'
 export { RegisterForm } from './components/RegisterForm'
-export * from './lib/supabase-client'
 export { middleware } from './middleware'
+export { createBrowserClient, createServerClient, getBrowserClient } from './lib/supabase-client'
+export type { User, UserInsert, UserUpdate, Session, AuthError } from './types'

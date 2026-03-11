@@ -1,25 +1,23 @@
 {
   "name": "@saas-factory/db",
-  "version": "0.0.1",
-  "description": "Database layer with Supabase integration",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc && vite build",
-    "dev": "vite build --watch",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "build": "tsc",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist node_modules/.vite",
-    "db:generate": "supabase gen types typescript --local > src/types.ts"
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "typescript": "^5.6.2",
-    "vite": "^5.4.8",
-    "@types/node": "^22.7.4",
-    "eslint": "^9.12.0",
-    "@supabase/supabase-js": "^2.45.4"
+    "typescript": "^5",
+    "vitest": "workspace:*",
+    "@testing-library/react": "workspace:*",
+    "jsdom": "workspace:*"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.38.4"
   }
 }

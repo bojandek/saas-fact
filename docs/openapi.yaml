@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: SaaS Factory Blocks API
+  description: API dokumentacija za sve blokove - Auth, Database, Payments, Emails
+  version: 0.1.0
+  contact:
+    name: SaaS Factory
+    url: https://github.com/your-org/saas-fact
+
+servers:
+  - url: http://localhost:3000
+    description: Development
+  - url: https://api.yourapp.com
+    description: Production
+
+tags:
+  - name: Auth
+    description: Autentifikacija i autorizacija (Supabase)
+  - name: Payments
+    description: Stripe webhook i subscription managment
+  - name: Emails
+    description: Email servis (Resend)
+  - name: Database
+    description: Supabase baza podataka
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Prijava korisnika
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Uspješna prijava
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  session:
+                    $ref: '#/components/schemas/Session'
+        '401':
+          description: Neispravne kredencijale
+        '422':
+          description: Validacijska greška
+
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Registracija novog korisnika
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+              required:
+                - name
+                - email
+                - password
+      responses:
+        '201':
+          description: Korisnik je uspješno registriran
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          description: Korisnik već postoji
+        '422':
+          description: Validacijska greška
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Odjava korisnika
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Uspješna odjava
+        '401':
+          description: Neautentificiran korisnik
+
+  /api/payments/webhooks:
+    post:
+      tags:
+        - Payments
+      summary: Stripe webhook handler
+      operationId: handleStripeWebhook
+      description: Primanja Stripe webhook events (customer.subscription.*)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Stripe event ID
+                type:
+                  type: string
+                  enum:
+                    - customer.subscription.created
+                    - customer.subscription.updated
+                    - customer.subscription.deleted
+                    - invoice.payment_succeeded
+                    - invoice.payment_failed
+                data:
+                  type: object
+                  description: Stripe event data (subscription object)
+      responses:
+        '200':
+          description: Webhook procesiran
+        '400':
+          description: Nevaljani webhook potpis
+        '422':
+          description: Greška pri procesiranju
+
+  /api/payments/checkout:
+    post:
+      tags:
+        - Payments
+      summary: Kreiraj Stripe checkout sesiju
+      operationId: createCheckoutSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priceId:
+                  type: string
+                  description: Stripe price ID (monthly/yearly)
+              required:
+                - priceId
+      responses:
+        '200':
+          description: Checkout sesija kreirjena
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl:
+                    type: string
+                    format: uri
+        '401':
+          description: Neautentificiran korisnik
+        '404':
+          description: Price ne postoji
+
+  /api/emails/send:
+    post:
+      tags:
+        - Emails
+      summary: Slanje email-a
+      operationId: sendEmail
+      description: Koristi Resend API za slanje email-a
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                to:
+                  type: string
+                  format: email
+                subject:
+                  type: string
+                template:
+                  type: string
+                  enum:
+                    - welcome
+                    - password-reset
+                    - invoice
+                data:
+                  type: object
+                  description: Template podatke (email-specific)
+              required:
+                - to
+                - subject
+                - template
+      responses:
+        '200':
+          description: Email poslан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Resend email ID
+        '400':
+          description: Validacijska greška
+        '500':
+          description: Email servis greška
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        tenantId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+            - owner
+          description: Korisničke dozvole u tenant-u
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - tenantId
+        - role
+        - createdAt
+
+    Session:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: Refresh token
+        expires_in:
+          type: integer
+          description: Drugi do isteka (3600)
+        expires_at:
+          type: integer
+          format: unix-time
+        token_type:
+          type: string
+          enum:
+            - Bearer
+      required:
+        - access_token
+        - refresh_token
+        - expires_in
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        subdomain:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+        plan:
+          type: string
+          enum:
+            - free
+            - pro
+            - enterprise
+        stripeCustomerId:
+          type: string
+          description: Stripe customer ID
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - subdomain
+        - plan
+        - createdAt
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        stripeSubscriptionId:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - past_due
+            - unpaid
+            - canceled
+            - trialing
+        planName:
+          type: string
+        currentPeriodStart:
+          type: string
+          format: date-time
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+      required:
+        - id
+        - status
+        - currentPeriodStart
+        - currentPeriodEnd
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token iz Supabase Auth

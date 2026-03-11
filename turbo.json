@@ -1,5 +1,4 @@
 {
-  "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "pipeline": {
     "build": {
@@ -17,6 +16,19 @@
       "dependsOn": ["^build"]
     },
     "clean": {
+      "cache": false
+    },
+    "test": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:ui": {
+      "cache": false
+    },
+    "coverage": {
+      "dependsOn": ["test"]
+    },
+    "e2e": {
       "cache": false
     }
   }
