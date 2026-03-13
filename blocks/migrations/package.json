@@ -1,0 +1,23 @@
+{
+  "name": "@saas-factory/blocks-migrations",
+  "version": "0.1.0",
+  "description": "Database migrations manager - zero-downtime deployments",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "migrate:up": "node dist/cli.js up",
+    "migrate:down": "node dist/cli.js down",
+    "migrate:status": "node dist/cli.js status"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "drizzle-orm": "^0.29.1",
+    "drizzle-kit": "^0.20.5"
+  }
+}

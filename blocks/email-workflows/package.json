@@ -1,0 +1,19 @@
+{
+  "name": "@saas-factory/blocks-email-workflows",
+  "version": "0.1.0",
+  "description": "Email workflow engine - automated sequences, drip campaigns, lifecycle emails",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "resend": "^3.0.0"
+  }
+}

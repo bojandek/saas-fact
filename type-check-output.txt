@@ -1,0 +1,235 @@
+
+> saas-factory@0.1.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact
+> turbo run type-check
+
+• turbo 2.8.15
+ WARNING  Unable to calculate transitive closures: Workspace 'blocks/core-integration' not found in lockfile.
+• Packages in scope: @saas-factory/agenthub, @saas-factory/ai-agency, @saas-factory/blocks-analytics, @saas-factory/blocks-auth, @saas-factory/blocks-cache, @saas-factory/blocks-circuit-breaker, @saas-factory/blocks-database, @saas-factory/blocks-email-workflows, @saas-factory/blocks-emails, @saas-factory/blocks-features, @saas-factory/blocks-migrations, @saas-factory/blocks-observability, @saas-factory/blocks-payments, @saas-factory/blocks-ratelimit, @saas-factory/blocks-webhooks, @saas-factory/computer-use, @saas-factory/control-center, @saas-factory/core, @saas-factory/core-integration, @saas-factory/db, @saas-factory/factory-cli, @saas-factory/firecrawl, @saas-factory/free-for-dev, @saas-factory/gemini-ai, @saas-factory/heretic, @saas-factory/mirofish, @saas-factory/monitoring-dashboard, @saas-factory/nanogpt, @saas-factory/qa-automation, @saas-factory/skill-store, @saas-factory/ui, saas-001-booking, saas-002-cms, test-auth, test-foundation, test-payments
+• Running type-check in 36 packages
+• Remote caching disabled
+@saas-factory/blocks-observability:type-check: cache miss, executing 0cbe8163d9eeb3c5
+@saas-factory/skill-store:type-check: cache miss, executing 084f46f7b8749056
+@saas-factory/skill-store:build: cache miss, executing 4a6ed29affb0f6c3
+@saas-factory/blocks-email-workflows:type-check: cache miss, executing 41f7d4e7bbaff40f
+@saas-factory/free-for-dev:build: cache miss, executing 2d2a5419642ec8f9
+@saas-factory/blocks-webhooks:type-check: cache miss, executing 82046fe559f066c2
+@saas-factory/computer-use:type-check: cache miss, executing 400493d4d5ed9702
+@saas-factory/ui:type-check: cache miss, executing 4980823d99035697
+@saas-factory/monitoring-dashboard:type-check: cache miss, executing 18049ee784338150
+@saas-factory/agenthub:build: cache miss, executing 1a67ed141d07e56c
+@saas-factory/blocks-observability:type-check: 
+@saas-factory/blocks-observability:type-check: > @saas-factory/blocks-observability@0.1.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\observability
+@saas-factory/blocks-observability:type-check: > tsc --noEmit
+@saas-factory/blocks-observability:type-check: 
+@saas-factory/free-for-dev:build: 
+@saas-factory/free-for-dev:build: > @saas-factory/free-for-dev@0.0.1 build C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\free-for-dev
+@saas-factory/free-for-dev:build: > tsc
+@saas-factory/free-for-dev:build: 
+@saas-factory/skill-store:type-check: 
+@saas-factory/skill-store:type-check: > @saas-factory/skill-store@0.0.1 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\skill-store
+@saas-factory/skill-store:type-check: > tsc --noEmit
+@saas-factory/skill-store:type-check: 
+@saas-factory/blocks-email-workflows:type-check: 
+@saas-factory/blocks-email-workflows:type-check: > @saas-factory/blocks-email-workflows@0.1.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\email-workflows
+@saas-factory/blocks-email-workflows:type-check: > tsc --noEmit
+@saas-factory/blocks-email-workflows:type-check: 
+@saas-factory/skill-store:build: 
+@saas-factory/skill-store:build: > @saas-factory/skill-store@0.0.1 build C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\skill-store
+@saas-factory/skill-store:build: > tsc
+@saas-factory/skill-store:build: 
+@saas-factory/blocks-webhooks:type-check: 
+@saas-factory/blocks-webhooks:type-check: > @saas-factory/blocks-webhooks@0.1.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\webhooks
+@saas-factory/blocks-webhooks:type-check: > tsc --noEmit
+@saas-factory/blocks-webhooks:type-check: 
+@saas-factory/computer-use:type-check: 
+@saas-factory/computer-use:type-check: > @saas-factory/computer-use@0.0.1 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\computer-use
+@saas-factory/computer-use:type-check: > tsc --noEmit
+@saas-factory/computer-use:type-check: 
+@saas-factory/ui:type-check: 
+@saas-factory/ui:type-check: > @saas-factory/ui@0.1.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\packages\ui
+@saas-factory/ui:type-check: > tsc --noEmit
+@saas-factory/ui:type-check: 
+@saas-factory/agenthub:build: 
+@saas-factory/agenthub:build: > @saas-factory/agenthub@0.0.1 build C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\agenthub
+@saas-factory/agenthub:build: > tsc
+@saas-factory/agenthub:build: 
+@saas-factory/monitoring-dashboard:type-check: 
+@saas-factory/monitoring-dashboard:type-check: > @saas-factory/monitoring-dashboard@1.0.0 type-check C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\monitoring-dashboard
+@saas-factory/monitoring-dashboard:type-check: > tsc --noEmit
+@saas-factory/monitoring-dashboard:type-check: 
+@saas-factory/free-for-dev:build: src/index.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/free-for-dev:build: src/index.ts(7,30): error TS2307: Cannot find module 'events' or its corresponding type declarations.
+@saas-factory/free-for-dev:build: src/index.ts(284,12): error TS2339: Property 'emit' does not exist on type 'FreeForDev'.
+@saas-factory/free-for-dev:build: src/index.ts(288,12): error TS2339: Property 'emit' does not exist on type 'FreeForDev'.
+@saas-factory/skill-store:build: src/index.ts(6,57): error TS2307: Cannot find module 'fs' or its corresponding type declarations.
+@saas-factory/skill-store:build: src/index.ts(7,22): error TS2307: Cannot find module 'path' or its corresponding type declarations.
+@saas-factory/skill-store:build: src/index.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/skill-store:build: src/index.ts(257,26): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+@saas-factory/skill-store:type-check: src/index.ts(6,57): error TS2307: Cannot find module 'fs' or its corresponding type declarations.
+@saas-factory/skill-store:type-check: src/index.ts(7,22): error TS2307: Cannot find module 'path' or its corresponding type declarations.
+@saas-factory/skill-store:type-check: src/index.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/skill-store:type-check: src/index.ts(257,26): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+@saas-factory/free-for-dev:build:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/free-for-dev:build:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/skill-store:build:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/skill-store:build:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/computer-use:type-check: src/cli.ts(4,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/cli.ts(24,16): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/cli.ts(52,9): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/cli.ts(56,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/cli.ts(67,7): error TS6133: 'timeout' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/cli.ts(247,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(248,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(249,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(250,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(252,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(253,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(254,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(255,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(257,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(258,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(259,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(260,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(261,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(266,5): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(268,7): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(273,5): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(275,7): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(279,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(286,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(287,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(288,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(289,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(291,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(292,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(293,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(294,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(297,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(299,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(300,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(302,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(309,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(310,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(311,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(312,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(314,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(315,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(316,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(317,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(319,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(320,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(323,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(326,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(329,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(333,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(340,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(402,3): error TS2584: Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/cli.ts(408,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/element-detector.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/element-detector.ts(2,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/element-detector.ts(10,11): error TS6133: 'ocrData' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/element-detector.ts(39,28): error TS2584: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(41,39): error TS2304: Cannot find name 'HTMLElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(373,30): error TS2304: Cannot find name 'HTMLElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(374,23): error TS2304: Cannot find name 'HTMLButtonElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(375,23): error TS2304: Cannot find name 'HTMLAnchorElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(377,21): error TS2304: Cannot find name 'HTMLInputElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(378,21): error TS2304: Cannot find name 'HTMLTextAreaElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(379,21): error TS2304: Cannot find name 'HTMLSelectElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(383,23): error TS2304: Cannot find name 'HTMLImageElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(390,27): error TS2304: Cannot find name 'HTMLElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(410,25): error TS2304: Cannot find name 'HTMLElement'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(411,19): error TS2304: Cannot find name 'window'.
+@saas-factory/computer-use:type-check: src/element-detector.ts(422,33): error TS2304: Cannot find name 'HTMLElement'.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(2,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(326,22): error TS6133: 'alt' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(332,17): error TS2698: Spread types may only be created from object types.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(390,11): error TS2304: Cannot find name 'window'.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(489,8): error TS7006: Parameter 'step' implicitly has an 'any' type.
+@saas-factory/computer-use:type-check: src/interaction-engine.ts(518,37): error TS2304: Cannot find name 'setTimeout'.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(2,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(197,13): error TS6133: 'session' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(209,15): error TS6133: 'beforeScreenshot' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(251,10): error TS7006: Parameter 's' implicitly has an 'any' type.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(316,32): error TS7006: Parameter 'req' implicitly has an 'any' type.
+@saas-factory/computer-use:type-check: src/orchestrator.ts(568,37): error TS2304: Cannot find name 'setTimeout'.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(2,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(3,19): error TS2307: Cannot find module 'sharp' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(4,23): error TS2307: Cannot find module 'tesseract.js' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(66,18): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(129,41): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(150,18): error TS7006: Parameter 'word' implicitly has an 'any' type.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(158,13): error TS7006: Parameter 'word' implicitly has an 'any' type.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(226,13): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(227,12): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(233,13): error TS6133: 'beforeMetadata' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(234,13): error TS6133: 'afterMetadata' is declared but its value is never read.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(272,18): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(277,14): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(304,18): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(306,14): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(320,20): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(344,40): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(346,35): error TS2307: Cannot find module 'crypto' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(363,18): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/screenshot-engine.ts(365,14): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/computer-use:type-check: src/types.ts(1,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/computer-use:type-check: src/types.ts(46,29): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+@saas-factory/skill-store:type-check:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/skill-store:type-check:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/monitoring-dashboard:type-check: src/alerts.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/monitoring-dashboard:type-check: src/dashboard.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/monitoring-dashboard:type-check: src/metrics.ts(1,18): error TS2307: Cannot find module 'pino' or its corresponding type declarations.
+@saas-factory/monitoring-dashboard:type-check: src/types.ts(1,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/computer-use:type-check:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/computer-use:type-check:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/monitoring-dashboard:type-check:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/monitoring-dashboard:type-check:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/agenthub:build: src/core.ts(8,46): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+@saas-factory/agenthub:build: src/core.ts(9,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+@saas-factory/agenthub:build: src/core.ts(10,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+@saas-factory/agenthub:build: src/core.ts(112,42): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(159,8): error TS7006: Parameter 'art' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(206,48): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(233,8): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(258,16): error TS7006: Parameter 'p' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(303,18): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/core.ts(304,15): error TS7006: Parameter 'a' implicitly has an 'any' type.
+@saas-factory/agenthub:build: src/types.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+@saas-factory/agenthub:build:  ELIFECYCLE  Command failed with exit code 2.
+@saas-factory/agenthub:build:  WARN   Local package.json exists, but node_modules missing, did you mean to install?
+@saas-factory/skill-store:build: ERROR: command finished with error: command (C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\skill-store) C:\Users\LENOVO\AppData\Local\pnpm\.tools\pnpm\9.1.0\bin\pnpm.CMD run build exited (2)
+@saas-factory/qa-automation:type-check: cache miss, executing e2824d5f2914070b
+@saas-factory/qa-automation:build: cache miss, executing c0dc58b26f5ab66f
+@saas-factory/free-for-dev:type-check: cache miss, executing 46a7aa42d7bee1a5
+@saas-factory/nanogpt:type-check: cache miss, executing 8a73e1499002349c
+@saas-factory/blocks-cache:type-check: cache miss, executing a95949170ebc9895
+@saas-factory/blocks-ratelimit:type-check: cache miss, executing d87b702283de559c
+@saas-factory/monitoring-dashboard:build: cache miss, executing 3b268083dba9f8fd
+@saas-factory/mirofish:type-check: cache miss, executing 420cf78148f7c4af
+@saas-factory/heretic:type-check: cache miss, executing 7e9a2e7d834658ea
+@saas-factory/db:build: cache miss, executing ca8686fe9e6d8dbd
+@saas-factory/agenthub:type-check: cache miss, executing 05d59ff106cd93c9
+@saas-factory/db:type-check: cache miss, executing af4dc233787a6bf6
+@saas-factory/nanogpt:build: cache miss, executing f8ca877d23f772b3
+@saas-factory/core:build: cache miss, executing c099897efe2004bd
+@saas-factory/control-center:type-check: cache miss, executing 98e710c9c10d1243
+@saas-factory/blocks-features:type-check: cache miss, executing 54022f107ef17414
+@saas-factory/blocks-analytics:type-check: cache miss, executing 5a3d2fbf7c9da5c5
+@saas-factory/blocks-circuit-breaker:type-check: cache miss, executing 4429c674a4a88dd5
+@saas-factory/heretic:build: cache miss, executing c29b96fbee5da22c
+@saas-factory/ui:build: cache miss, executing 19c81ba2f87d5deb
+@saas-factory/blocks-migrations:type-check: cache miss, executing 5c5765a970df1863
+@saas-factory/core:type-check: cache miss, executing bc12a89497f39adf
+@saas-factory/skill-store#build: command (C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\skill-store) C:\Users\LENOVO\AppData\Local\pnpm\.tools\pnpm\9.1.0\bin\pnpm.CMD run build exited (2)
+
+ Tasks:    0 successful, 32 total
+Cached:    0 cached, 32 total
+  Time:    10.898s 
+Failed:    @saas-factory/skill-store#build
+
+ ERROR  run failed: command  exited (2)
+ ELIFECYCLE  Command failed with exit code 2.

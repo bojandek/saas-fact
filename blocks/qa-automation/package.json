@@ -1,0 +1,49 @@
+{
+  "name": "@saas-factory/qa-automation",
+  "version": "1.0.0",
+  "description": "Automated QA testing for generated SaaS applications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./test-generator": {
+      "import": "./dist/test-generator.js",
+      "types": "./dist/test-generator.d.ts"
+    },
+    "./coverage-analyzer": {
+      "import": "./dist/coverage-analyzer.js",
+      "types": "./dist/coverage-analyzer.d.ts"
+    },
+    "./e2e-orchestrator": {
+      "import": "./dist/e2e-orchestrator.js",
+      "types": "./dist/e2e-orchestrator.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^1.6.0",
+    "ts-node": "^10.9.2",
+    "axios": "^1.6.5",
+    "dotenv": "^16.4.5",
+    "pino": "^8.17.2",
+    "zod": "^3.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0"
+  }
+}

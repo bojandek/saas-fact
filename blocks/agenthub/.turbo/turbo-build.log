@@ -1,0 +1,17 @@
+
+> @saas-factory/agenthub@0.0.1 build C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\agenthub
+> tsc
+
+src/core.ts(8,46): error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+src/core.ts(9,24): error TS2307: Cannot find module 'nanoid' or its corresponding type declarations.
+src/core.ts(10,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+src/core.ts(112,42): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/core.ts(159,8): error TS7006: Parameter 'art' implicitly has an 'any' type.
+src/core.ts(206,48): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/core.ts(233,8): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/core.ts(258,16): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/core.ts(303,18): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/core.ts(304,15): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/types.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 2.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

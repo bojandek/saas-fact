@@ -2,5 +2,6 @@ packages:
   - 'apps/*'
   - 'blocks/*'
   - 'packages/*'
+  - 'factory-brain'
   - 'factory-brain/*'
-  - 'factory-dashboard/*'
+  - 'factory-dashboard'

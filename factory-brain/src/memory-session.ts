@@ -1,0 +1,216 @@
+/**
+ * Memory Session Manager - Integration Point for Using Always-On Memory
+ * This is what you import and use in your apps to access the brain
+ */
+
+import { AlwaysOnMemoryEngine, MemoryState, ReasoningStep, Pattern } from './always-on-memory'
+
+/**
+ * Global memory instance (per user session)
+ * Initialize once at app startup, then use everywhere
+ */
+let globalMemory: AlwaysOnMemoryEngine | null = null
+
+/**
+ * Initialize memory for a session
+ * Call this ONCE when app starts or user logs in
+ * 
+ * @example
+ * // In Next.js app layout or server startup
+ * async function setupApp() {
+ *   await initializeMemory(userId)
+ * }
+ */
+export async function initializeMemory(sessionId: string): Promise<AlwaysOnMemoryEngine> {
+  if (globalMemory) {
+    console.log('Memory already initialized for session:', sessionId)
+    return globalMemory
+  }
+
+  console.log('🧠 Initializing Always-On Memory for session:', sessionId)
+  globalMemory = new AlwaysOnMemoryEngine(sessionId)
+  await globalMemory.initialize()
+
+  // Log memory restoration
+  const insights = await globalMemory.getInsights()
+  console.log('📊 Memory restored with:', {
+    previous_interactions: insights.total_interactions,
+    average_confidence: insights.average_confidence,
+    learning_progress: `${Math.round(insights.learning_progress)}%`,
+    known_patterns: insights.top_patterns.length,
+  })
+
+  return globalMemory
+}
+
+/**
+ * Get current memory instance
+ * Use this in your code to ask the brain for decisions
+ * 
+ * @example
+ * const memory = getMemory()
+ * const decision = await memory.reason('How to build this feature?')
+ */
+export function getMemory(): AlwaysOnMemoryEngine {
+  if (!globalMemory) {
+    throw new Error(
+      'Memory not initialized. Call initializeMemory(sessionId) first at app startup.'
+    )
+  }
+  return globalMemory
+}
+
+/**
+ * Ask the brain for reasoning
+ * Use this whenever you need the brain to think about something
+ * 
+ * @example
+ * const decision = await askBrain(
+ *   'Should we use microservices or monolith?',
+ *   { scale: '1M users', budget: 'moderate', team_size: 5 }
+ * )
+ * console.log(decision.recommendation)
+ * console.log(decision.confidence)
+ */
+export async function askBrain(
+  question: string,
+  context: Record<string, any> = {}
+): Promise<{
+  recommendation: string
+  confidence: number
+  reasoning: string
+  sources: string[]
+}> {
+  const memory = getMemory()
+
+  // Ask the brain
+  const step = await memory.reason(question, context)
+
+  // Return user-friendly result
+  return {
+    recommendation: step.output.recommendation,
+    confidence: step.confidence,
+    reasoning: step.reasoning,
+    sources: step.sources,
+  }
+}
+
+/**
+ * Tell the brain if a recommendation was good or bad
+ * This is crucial - the more feedback, the smarter the brain becomes
+ * 
+ * @example
+ * // After you've implemented the recommendation
+ * await feedbackToBrain(
+ *   decisionId,
+ *   'Used RLS with Supabase',
+ *   'positive',
+ *   'Worked great, very fast implementation'
+ * )
+ */
+export async function feedbackToBrain(
+  decisionId: string,
+  action: string,
+  feedback: 'positive' | 'negative' | 'neutral',
+  notes?: string
+): Promise<void> {
+  const memory = getMemory()
+  await memory.recordDecision(decisionId, action, feedback, notes)
+
+  console.log(`📝 Brain learned: ${action} was ${feedback}`)
+}
+
+/**
+ * Teach the brain a new pattern
+ * When you discover a successful pattern, teach it so it can reuse
+ * 
+ * @example
+ * await teachBrain(
+ *   'optimized-multi-tenant-rls',
+ *   'Use RLS with shared database for multi-tenancy',
+ *   ['multi-tenant', 'rls', 'postgres', 'supabase'],
+ *   'Always start with shared DB + RLS for cost efficiency'
+ * )
+ */
+export async function teachBrain(
+  patternName: string,
+  description: string,
+  triggers: string[],
+  recommendation: string
+): Promise<void> {
+  const memory = getMemory()
+  await memory.learnPattern(patternName, description, triggers, recommendation)
+
+  console.log(`🎓 Brain learned new pattern: ${patternName}`)
+}
+
+/**
+ * Update how effective a pattern is
+ * Call this after you use a pattern to reinforce or discourage it
+ * 
+ * @example
+ * await updatePatternEffectiveness('multi-tenant-rls', true)  // worked!
+ */
+export async function updatePatternEffectiveness(
+  patternName: string,
+  successful: boolean
+): Promise<void> {
+  const memory = getMemory()
+  await memory.updatePatternEffectiveness(patternName, successful)
+}
+
+/**
+ * Get brain insights and status
+ * Shows how much the brain has learned
+ * 
+ * @example
+ * const insights = await getBrainStatus()
+ * console.log(`Brain is ${insights.learning_progress}% trained`)
+ */
+export async function getBrainStatus(): Promise<{
+  total_interactions: number
+  average_confidence: number
+  learning_progress: number
+  top_patterns: Pattern[]
+  effective_rules: any[]
+}> {
+  const memory = getMemory()
+  return await memory.getInsights()
+}
+
+/**
+ * Update brain context with user info
+ * Helps the brain understand preferences and situation
+ * 
+ * @example
+ * await updateBrainContext('user_role', 'architect')
+ * await updateBrainContext('team_size', 5)
+ * await updateBrainContext('budget', 'moderate')
+ */
+export function updateBrainContext(key: string, value: any): void {
+  const memory = getMemory()
+  memory.updateContext(key, value)
+
+  console.log(`🧠 Context updated: ${key} = ${value}`)
+}
+
+/**
+ * Cleanup memory on app shutdown
+ * Call this when user logs out or app closes
+ * 
+ * @example
+ * process.on('exit', async () => {
+ *   await cleanupMemory()
+ * })
+ */
+export async function cleanupMemory(): Promise<void> {
+  if (globalMemory) {
+    await globalMemory.cleanup()
+    globalMemory = null
+    console.log('🧠 Memory engine cleaned up')
+  }
+}
+
+// TypeScript convenience types
+export type BrainDecision = Awaited<ReturnType<typeof askBrain>>
+export type BrainInsights = Awaited<ReturnType<typeof getBrainStatus>>

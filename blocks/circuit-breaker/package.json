@@ -1,0 +1,21 @@
+{
+  "name": "@saas-factory/blocks-circuit-breaker",
+  "version": "0.1.0",
+  "description": "Circuit Breaker pattern for resilient error handling and fallbacks",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@saas-factory/blocks-observability": "workspace:*"
+  }
+}

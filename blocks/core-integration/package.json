@@ -1,0 +1,29 @@
+{
+  "name": "@saas-factory/core-integration",
+  "version": "1.0.0",
+  "description": "Core integration module that orchestrates all SaaS Factory components",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "lint": "eslint src/**/*.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saas-factory/qa-automation": "workspace:*",
+    "@saas-factory/nanogpt": "workspace:*",
+    "@saas-factory/blocks-observability": "workspace:*",
+    "pino": "^8.17.2",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.0",
+    "eslint": "^8.56.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@saas-factory/skill-store",
+  "version": "0.0.1",
+  "description": "Skill Store - Access 152k+ expert prompts from prompts.chat. Agents can install skills like 'Expert Accountant', 'God-tier Copywriter', etc.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint . --ext ts",
+    "type-check": "tsc --noEmit",
+    "sync-prompts": "tsx src/sync-prompts.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4",
+    "tsx": "^4.7.2",
+    "eslint": "^9.12.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "zod": "^3.23.8",
+    "node-fetch": "^3.3.0"
+  }
+}

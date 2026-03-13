@@ -1,0 +1,54 @@
+{
+  "name": "@saas-factory/nanogpt",
+  "version": "1.0.0",
+  "description": "Karpathy nanoGPT integration for custom AI models and fine-tuning",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./model": {
+      "import": "./dist/model.js",
+      "types": "./dist/model.d.ts"
+    },
+    "./trainer": {
+      "import": "./dist/trainer.js",
+      "types": "./dist/trainer.d.ts"
+    },
+    "./inference": {
+      "import": "./dist/inference.js",
+      "types": "./dist/inference.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "train": "node --loader ts-node/esm src/cli/train.ts",
+    "inference": "node --loader ts-node/esm src/cli/inference.ts",
+    "benchmark": "node --loader ts-node/esm src/cli/benchmark.ts",
+    "lint": "eslint src/**/*.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pino": "^8.17.2",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.1",
+    "axios": "^1.6.5",
+    "onnx": "^1.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.0",
+    "ts-node": "^10.9.2",
+    "eslint": "^8.56.0"
+  },
+  "optionalDependencies": {
+    "torch": "^2.0.0",
+    "tensorflow": "^4.10.0"
+  }
+}

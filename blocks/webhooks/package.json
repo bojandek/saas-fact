@@ -1,0 +1,19 @@
+{
+  "name": "@saas-factory/blocks-webhooks",
+  "version": "0.1.0",
+  "description": "Webhooks system - reliable, signed, retryable webhook delivery",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "svix": "^1.15.0"
+  }
+}

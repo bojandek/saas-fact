@@ -1,0 +1,40 @@
+{
+  "name": "@saas-factory/factory-cli",
+  "version": "0.0.1",
+  "description": "Factory CLI - Master control center for SaaS Factory OS. Orchestrate all modules via command line.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "factory": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli.ts",
+    "lint": "eslint . --ext ts",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4",
+    "@types/commander": "^2.12.5",
+    "@types/chalk": "^2.2.0",
+    "@types/ora": "^3.2.0",
+    "tsx": "^4.7.2",
+    "eslint": "^9.12.0"
+  },
+  "dependencies": {
+    "@saas-factory/agenthub": "workspace:*",
+    "@saas-factory/ai-agency": "workspace:*",
+    "@saas-factory/heretic": "workspace:*",
+    "@saas-factory/skill-store": "workspace:*",
+    "@saas-factory/free-for-dev": "workspace:*",
+    "@saas-factory/factory-brain": "workspace:*",
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "table": "^6.8.0",
+    "pino": "^8.17.0",
+    "pino-pretty": "^10.2.0",
+    "zod": "^3.23.8"
+  }
+}

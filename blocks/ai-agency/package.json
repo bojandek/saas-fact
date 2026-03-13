@@ -1,0 +1,25 @@
+{
+  "name": "@saas-factory/ai-agency",
+  "version": "0.0.1",
+  "description": "AI Agency Model - 50-person equivalent AI team structured in Engineering, Design, and Marketing divisions",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint . --ext ts",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@types/node": "^22.7.4",
+    "tsx": "^4.7.2",
+    "eslint": "^9.12.0"
+  },
+  "dependencies": {
+    "@saas-factory/agenthub": "workspace:*",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "@supabase/supabase-js": "^2.38.4",
+    "zod": "^3.23.8"
+  }
+}

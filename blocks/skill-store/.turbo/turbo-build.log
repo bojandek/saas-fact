@@ -1,0 +1,10 @@
+
+> @saas-factory/skill-store@0.0.1 build C:\Users\LENOVO\OneDrive\Desktop\saas-fact\blocks\skill-store
+> tsc
+
+src/index.ts(6,57): error TS2307: Cannot find module 'fs' or its corresponding type declarations.
+src/index.ts(7,22): error TS2307: Cannot find module 'path' or its corresponding type declarations.
+src/index.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+src/index.ts(257,26): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+ ELIFECYCLE  Command failed with exit code 2.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

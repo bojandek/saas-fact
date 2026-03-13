@@ -24,8 +24,8 @@
     "react-dom": "^18",
     "typescript": "^5",
     "vite": "^5",
-    "vitest": "workspace:*",
-    "@testing-library/react": "workspace:*",
-    "jsdom": "workspace:*"
+    "vitest": "^1.6.0",
+    "@testing-library/react": "^16.3.0",
+    "jsdom": "^28.1.0"
   }
 }
