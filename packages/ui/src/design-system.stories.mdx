@@ -1,0 +1,114 @@
+# Design System
+
+## Overview
+
+The SaaS Factory UI Design System uses Apple-inspired design principles with production-grade TypeScript components and Tailwind CSS integration.
+
+## Color Palette
+
+### Primary Colors
+- **Primary**: `#007AFF` - Main brand color
+- **Primary Light**: `#5AC8FA` - Lighter variant
+- **Primary Dark**: `#0051D5` - Darker variant
+
+### Semantic Colors
+- **Success**: `#34C759` - Positive actions
+- **Warning**: `#FF9500` - Caution states
+- **Danger**: `#FF3B30` - Destructive actions
+- **Info**: `#00b4db` - Informational content
+
+### Neutral Colors
+
+#### Light Mode
+- **Background**: `#FFFFFF`
+- **Surface**: `#F2F2F7`
+- **Border**: `#E5E5EA`
+- **Text Primary**: `#000000`
+- **Text Secondary**: `#3C3C43`
+- **Text Tertiary**: `#8E8E93`
+
+#### Dark Mode
+- **Background**: `#000000`
+- **Surface**: `#1C1C1E`
+- **Border**: `#38383A`
+- **Text Primary**: `#FFFFFF`
+- **Text Secondary**: `#A2A2A7`
+- **Text Tertiary**: `#86868B`
+
+## Typography
+
+| Type | Size | Weight | Line Height |
+|------|------|--------|-------------|
+| Display | 28px | 700 | 1.2 |
+| Title | 22px | 600 | 1.3 |
+| Headline | 17px | 600 | 1.4 |
+| Body | 16px | 400 | 1.5 |
+| Caption | 13px | 400 | 1.4 |
+
+## Spacing Scale
+
+- **XS**: 4px
+- **SM**: 8px
+- **MD**: 16px
+- **LG**: 24px
+- **XL**: 32px
+- **2XL**: 48px
+- **3XL**: 64px
+- **4XL**: 96px
+
+## Shadows
+
+- **Elevation 0**: None
+- **Elevation 1**: Small shadow for subtle depth
+- **Elevation 2**: Medium shadow for cards
+- **Elevation 3**: Large shadow for dropdowns
+- **Elevation 4**: Extra large shadow for modals
+
+## Border Radius
+
+- **SM**: 4px (small elements)
+- **MD**: 8px (buttons, inputs)
+- **LG**: 12px (cards)
+- **XL**: 16px (large containers)
+- **Full**: 9999px (badges, avatars)
+
+## Usage
+
+All design tokens are centralized in `packages/ui/src/design-tokens.ts` and automatically synced to Tailwind CSS via `tailwind.config.ts`.
+
+### Tailwind Classes
+
+```tsx
+// Colors
+<div className="bg-primary text-primary-foreground">Primary</div>
+<div className="dark:bg-surface-dark">Dark surface</div>
+
+// Typography
+<div className="text-display font-bold">Display</div>
+<div className="text-body">Body text</div>
+
+// Spacing
+<div className="p-md gap-lg">Spacing</div>
+
+// Shadows
+<div className="shadow-md">Card shadow</div>
+
+// Radius
+<div className="rounded-lg">Rounded container</div>
+```
+
+## Figma Integration
+
+This design system is synced from Figma using:
+- **Design Tokens**: Exported to `design-tokens.ts`
+- **Components**: Generated from Figma components
+- **Styles**: Tailwind configuration maintained in sync
+
+## Component Library
+
+All components follow these principles:
+- **Accessible**: WCAG AA compliant
+- **Typed**: Full TypeScript support
+- **Responsive**: Mobile-first design
+- **Themeable**: Light/dark mode support
+- **Tested**: Unit + integration tests
