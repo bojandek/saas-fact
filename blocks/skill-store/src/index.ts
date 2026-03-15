@@ -18,7 +18,7 @@ export const SkillSchema = z.object({
   expertiseArea: z.string(),
   category: z.string().optional(),
   author: z.string().optional(),
-  CreatedAt: z.date().optional(),
+  createdAt: z.date().optional(),
 })
 
 export type Skill = z.infer<typeof SkillSchema>

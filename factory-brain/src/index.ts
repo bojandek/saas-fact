@@ -7,12 +7,22 @@ export { RAGSystem } from './rag'
 export { MemorySystem } from './memory'
 export { ArchitectAgent, CodeReviewAgent, DesignAgent } from './agents'
 
-// Initialize all systems
-const architectAgent = new (require('./agents').ArchitectAgent)()
-const codeReviewAgent = new (require('./agents').CodeReviewAgent)()
-const designAgent = new (require('./agents').DesignAgent)()
+// Re-export types for consumers
+export type { QueryResult } from './rag'
 
-console.log('🧠 Factory Brain initialized')
-console.log('  ✓ RAG system ready')
-console.log('  ✓ Memory system ready')
-console.log('  ✓ Agents initialized')
+/**
+ * Initialize Factory Brain system (call once at app startup)
+ */
+export function initFactoryBrain(): {
+  status: 'ready'
+  systems: ['rag', 'memory', 'agents']
+} {
+  // Validate required env vars at startup
+  const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'ANTHROPIC_API_KEY']
+  const missing = required.filter((key) => !process.env[key])
+  if (missing.length > 0) {
+    throw new Error(`Factory Brain: Missing env vars: ${missing.join(', ')}`)
+  }
+
+  return { status: 'ready', systems: ['rag', 'memory', 'agents'] }
+}

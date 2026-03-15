@@ -14,8 +14,7 @@
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^1.6.0",
-    "@testing-library/react": "^16.3.0",
-    "jsdom": "workspace:*"
+    "@types/node": "^20"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4"
