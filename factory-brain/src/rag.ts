@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { OpenCrawlAgent } from './opencrawl-agent';
 
 interface Document {
   id: string
@@ -22,13 +23,15 @@ interface QueryResult {
 }
 
 export class RAGSystem {
+  private openCrawlAgent: OpenCrawlAgent;
   private supabase: ReturnType<typeof createClient>
 
   constructor() {
     this.supabase = createClient(
       process.env.SUPABASE_URL || '',
       process.env.SUPABASE_ANON_KEY || ''
-    )
+    );
+    this.openCrawlAgent = new OpenCrawlAgent();
   }
 
   /**
@@ -79,6 +82,25 @@ export class RAGSystem {
 
     if (error) throw error
     return data as Document[]
+  }
+
+  /**
+   * Crawl external sources and store documents in the knowledge base
+   */
+  async crawlAndStore(query: string, category: string, limit: number = 1): Promise<void> {
+    const crawledResults = await this.openCrawlAgent.crawl(query, limit);
+
+    for (const result of crawledResults) {
+      // In a real scenario, embedding would be generated here before storing
+      await this.storeDocument({
+        id: result.url, // Using URL as ID for simplicity
+        title: result.title,
+        content: result.content,
+        category: category,
+        created_at: new Date().toISOString(),
+      });
+    }
+    console.log(`Crawled and stored ${crawledResults.length} documents for query: ${query}`);
   }
 }
 

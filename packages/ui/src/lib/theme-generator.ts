@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { RAGSystem } from '../../../factory-brain/src/rag';
 
 interface GeneratedTheme {
   primaryColor: string;
@@ -11,18 +12,30 @@ interface GeneratedTheme {
 
 export class ThemeGenerator {
   private openai: OpenAI;
+  private ragSystem: RAGSystem;
 
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+    this.ragSystem = new RAGSystem();
   }
 
   async generateTheme(saasDescription: string): Promise<GeneratedTheme> {
-    const prompt = `Generate a modern UI theme (primary, secondary, accent colors in hex, font family, border radius in rem) for a SaaS application based on the following description:
+    // Retrieve relevant design principles from the knowledge base
+    const designPrinciples = await this.ragSystem.search(
+      "Apple Human Interface Guidelines for SaaS UI design",
+      2
+    );
+    const designContext = designPrinciples
+      .map((doc) => doc.content)
+      .join("\n\n");
+
+    const prompt = `Generate a modern UI theme (primary, secondary, accent colors in hex, font family, border radius in rem) for a SaaS application based on the following description. Adhere to the provided design principles for a high-quality user experience.
 
 Description: ${saasDescription}
 
+Design Principles Context:\n${designContext}\n
 Provide the output as a JSON object with the following structure:
 {
   "primaryColor": "#HEXCODE",
@@ -37,7 +50,7 @@ Ensure the colors are harmonious and suitable for the SaaS type.`;
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini", // Use a suitable model
       messages: [
-        { role: "system", content: "You are a UI/UX designer AI that generates modern and harmonious themes for SaaS applications." },
+        { role: "system", content: "You are a UI/UX designer AI that generates modern and harmonious themes for SaaS applications, adhering to best practices." },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
