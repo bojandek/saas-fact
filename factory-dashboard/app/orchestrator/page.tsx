@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { WarRoomOrchestrator, AgentMessage, AgentContext } from '../../factory-brain/src/war-room-orchestrator';
 import { Button } from '@saas-factory/ui';
 
 interface GeneratedTheme {
@@ -57,7 +58,7 @@ interface GrowthPlan {
   }>;
 }
 
-type Step = 'description' | 'theme' | 'blueprint' | 'landing' | 'growth' | 'compliance' | 'deploy' | 'complete';
+type Step = 'description' | 'theme' | 'blueprint' | 'landing' | 'growth' | 'compliance' | 'qa' | 'deploy' | 'complete';
 
 export default function OrchestratorPage() {
   const [currentStep, setCurrentStep] = useState<Step>('description');
@@ -67,10 +68,22 @@ export default function OrchestratorPage() {
   const [blueprint, setBlueprint] = useState<ArchitectBlueprint | null>(null);
   const [landingPage, setLandingPage] = useState<LandingPageContent | null>(null);
   const [growthPlan, setGrowthPlan] = useState<GrowthPlan | null>(null);
-  const [complianceChecks, setComplianceChecks] = useState<ComplianceCheckResult[] | null>(null);
+  const [complianceChecks, setComplianceChecks] = useState<any[] | null>(null);
+  const [qaResults, setQaResults] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deploymentResult, setDeploymentResult] = useState<string | null>(null);
+  const [warRoomMessages, setWarRoomMessages] = useState<AgentMessage[]>([]);
+  const [currentAgentContext, setCurrentAgentContext] = useState<AgentContext | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [warRoomMessages]);
 
   const handleGenerateTheme = async () => {
     setLoading(true);
@@ -79,12 +92,14 @@ export default function OrchestratorPage() {
       const response = await fetch('/api/generate-theme', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: saasDescription }),
+        body: JSON.stringify({ description: saasDescription, context: currentAgentContext }),
       });
 
       if (!response.ok) throw new Error('Failed to generate theme');
-      const data = await response.json();
-      setTheme(data);
+      const { theme: generatedTheme, messages, context } = await response.json();
+      setTheme(generatedTheme);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep('blueprint');
     } catch (err: any) {
       setError(err.message);
@@ -100,12 +115,14 @@ export default function OrchestratorPage() {
       const response = await fetch('/api/architect-blueprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: saasDescription }),
+        body: JSON.stringify({ description: saasDescription, context: currentAgentContext }),
       });
 
       if (!response.ok) throw new Error('Failed to generate blueprint');
-      const data = await response.json();
-      setBlueprint(data);
+      const { blueprint: generatedBlueprint, messages, context } = await response.json();
+      setBlueprint(generatedBlueprint);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep('landing');
     } catch (err: any) {
       setError(err.message);
@@ -121,12 +138,14 @@ export default function OrchestratorPage() {
       const response = await fetch('/api/generate-landing-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: saasDescription }),
+        body: JSON.stringify({ description: saasDescription, context: currentAgentContext }),
       });
 
       if (!response.ok) throw new Error('Failed to generate landing page');
-      const data = await response.json();
-      setLandingPage(data);
+      const { landingPage: generatedLandingPage, messages, context } = await response.json();
+      setLandingPage(generatedLandingPage);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep('growth');
     } catch (err: any) {
       setError(err.message);
@@ -142,12 +161,14 @@ export default function OrchestratorPage() {
       const response = await fetch('/api/generate-growth-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: saasDescription }),
+        body: JSON.stringify({ description: saasDescription, context: currentAgentContext }),
       });
 
       if (!response.ok) throw new Error('Failed to generate growth plan');
-      const data = await response.json();
-      setGrowthPlan(data);
+      const { growthPlan: generatedGrowthPlan, messages, context } = await response.json();
+      setGrowthPlan(generatedGrowthPlan);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep('compliance');
     } catch (err: any) {
       setError(err.message);
@@ -169,12 +190,46 @@ export default function OrchestratorPage() {
           generatedBlueprint: blueprint,
           generatedLandingPage: landingPage,
           generatedGrowthPlan: growthPlan,
+          context: currentAgentContext,
         }),
       });
 
       if (!response.ok) throw new Error("Failed to run compliance checks");
-      const data = await response.json();
-      setComplianceChecks(data);
+      const { checks, messages, context } = await response.json();
+      setComplianceChecks(checks);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
+      setCurrentStep("qa");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    const handleRunQaTests = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/generate-qa-tests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          saasDescription,
+          appName,
+          generatedTheme: theme,
+          generatedBlueprint: blueprint,
+          generatedLandingPage: landingPage,
+          generatedGrowthPlan: growthPlan,
+          context: currentAgentContext,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to run QA tests");
+      const { tests, messages, context } = await response.json();
+      setQaResults(tests);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep("deploy");
     } catch (err: any) {
       setError(err.message);
@@ -201,12 +256,15 @@ export default function OrchestratorPage() {
           branch: 'main',
           environment: 'production',
           domain: `${appName.toLowerCase().replace(/\s/g, '-')}.saas-factory.dev`,
+          context: currentAgentContext,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to deploy');
-      const data = await response.json();
-      setDeploymentResult(data.message);
+      const { message, messages, context } = await response.json();
+      setDeploymentResult(message);
+      setWarRoomMessages((prev) => [...prev, ...messages]);
+      setCurrentAgentContext(context);
       setCurrentStep('complete');
     } catch (err: any) {
       setError(err.message);
@@ -244,7 +302,7 @@ export default function OrchestratorPage() {
       </div>
 
       {/* Step Content */}
-      <div className="p-6 border rounded-lg shadow-sm">
+      <div className="p-6 border rounded-lg shadow-sm relative">
         {currentStep === 'description' && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 1: Describe Your SaaS Idea</h2>
@@ -261,14 +319,45 @@ export default function OrchestratorPage() {
               onChange={(e) => setAppName(e.target.value)}
               placeholder="App Name (e.g., 'DentistCRM')"
               className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-            />
-            <Button onClick={handleGenerateTheme} disabled={loading || !saasDescription || !appName}>
+            />            <Button onClick={handleGenerateTheme} disabled={loading || !saasDescription || !appName}>
               {loading ? 'Generating Theme...' : 'Generate Theme (Nano Banana)'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
-        {currentStep === 'theme' && theme && (
+       {currentStep === 'theme' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}theme && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 2: Your Generated Theme</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -287,34 +376,157 @@ export default function OrchestratorPage() {
                 </div>
               </div>
             </div>
-            <Button onClick={handleGenerateBlueprint} disabled={loading}>
+                   <Button onClick={handleGenerateBlueprint} disabled={loading}>
               {loading ? 'Generating Blueprint...' : 'Generate Architecture (Architect Agent)'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )n>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
-        {currentStep === 'blueprint' && blueprint && (
+       {currentStep === 'blueprint' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}blueprint && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 3: Your Generated Blueprint</h2>
             <p className="text-gray-600 mb-4">✓ Database schema, API spec, and RLS policies generated</p>
-            <Button onClick={handleGenerateLandingPage} disabled={loading}>
+                  <Button onClick={handleGenerateLandingPage} disabled={loading}>
               {loading ? 'Generating Landing Page...' : 'Generate Landing Page'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )on>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
-        {currentStep === 'landing' && landingPage && (
+       {currentStep === 'landing' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}landingPage && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 4: Your Landing Page</h2>
             <p className="text-gray-600 mb-4">✓ Hero, Features, Pricing & Testimonials generated</p>
             <p><strong>Headline:</strong> {landingPage.hero.headline}</p>
-            <Button onClick={handleGenerateGrowthPlan} disabled={loading} className="mt-4">
+                    <Button onClick={handleGenerateGrowthPlan} disabled={loading} className="mt-4">
               {loading ? 'Generating Growth Plan...' : 'Generate Growth Plan'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )on>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
-        {currentStep === 'growth' && growthPlan && (
+        {currentStep === 'qa' && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Step 7: Quality Assurance</h2>
+            <p className="text-gray-600 mb-4">Running automated Playwright tests to ensure everything works as expected.</p>
+            <Button onClick={handleRunQaTests} disabled={loading} className="mt-4">
+              {loading ? 'Running QA Tests...' : 'Run QA Tests'}
+            </Button>
+            {qaResults && (
+              <div className="mt-4 p-4 bg-gray-100 rounded">
+                <h3 className="font-bold">QA Test Summary:</h3>
+                <p>{qaResults.testSummary}</p>
+                <pre className="bg-gray-800 text-white p-2 rounded mt-2 overflow-x-auto">{qaResults.playwrightTests}</pre>
+              </div>
+            )}
+          </>
+        )}
+
+        {currentStep === 'deploy' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}rowthPlan && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 5: Your Growth Plan</h2>
             <p className="text-gray-600 mb-4">✓ SEO, Social Media & Email Campaign generated</p>
@@ -324,10 +536,42 @@ export default function OrchestratorPage() {
             <Button onClick={handleRunComplianceChecks} disabled={loading} className="mt-4">
               {loading ? 'Running Checks...' : 'Run Compliance Checks'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )    </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
-        {currentStep === 'compliance' && complianceChecks && (
+       {currentStep === 'compliance' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}complianceChecks && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 6: Compliance & Best Practice Checks</h2>
             <div className="space-y-4">
@@ -349,13 +593,65 @@ export default function OrchestratorPage() {
                 </div>
               ))}
             </div>
-            <Button onClick={handleDeploy} disabled={loading} className="mt-4">
+            <Button onClick={(            <Button onClick={handleDeploy} disabled={loading} className="mt-4">
               {loading ? 'Deploying...' : 'Deploy to Coolify (Go Live)'}
             </Button>
+            {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )           {warRoomMessages.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+                {warRoomMessages.map((msg, index) => (
+                  <div key={index} className="text-sm mb-1">
+                    <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </>
         )}
 
         {currentStep === 'complete' && deploymentResult && (
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+            {warRoomMessages.map((msg, index) => (
+              <div key={index} className="text-sm mb-1">
+                <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+            {warRoomMessages.map((msg, index) => (
+              <div key={index} className="text-sm mb-1">
+                <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+          {warRoomMessages.length > 0 && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-2">Agent Communication Log</h3>
+              {warRoomMessages.map((msg, index) => (
+                <div key={index} className="text-sm mb-1">
+                  <span className="font-bold">{msg.sender}</span> to <span className="font-bold">{msg.recipient}</span> ({msg.type}): {msg.content}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
           <>
             <h2 className="text-2xl font-semibold mb-4">✅ Your SaaS is Live!</h2>
             <p className="text-green-600 font-medium mb-4">{deploymentResult}</p>

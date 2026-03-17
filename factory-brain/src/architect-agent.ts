@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { SqlGenerator } from './sql-generator';
 import { RAGSystem } from './rag';
+import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
 
 interface ArchitectBlueprint {
   sqlSchema: string;
@@ -12,16 +13,32 @@ export class ArchitectAgent {
   private openai: OpenAI;
   private sqlGenerator: SqlGenerator;
   private ragSystem: RAGSystem;
+  private orchestrator?: WarRoomOrchestrator;
 
-  constructor() {
+  constructor(orchestrator?: WarRoomOrchestrator) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
     this.sqlGenerator = new SqlGenerator();
     this.ragSystem = new RAGSystem();
+    this.orchestrator = orchestrator;
   }
 
-  async generateBlueprint(saasDescription: string): Promise<ArchitectBlueprint> {
+  async generateBlueprint(saasDescription: string, currentContext?: AgentContext): Promise<ArchitectBlueprint> {
+    if (this.orchestrator) {
+      await this.orchestrator.sendMessage({
+        sender: 'Architect Agent',
+        recipient: 'Orchestrator',
+        type: 'info',
+        content: `Starting blueprint generation for: ${saasDescription}`,
+      });
+    }
+
+    let refinedDescription = saasDescription;
+    if (currentContext?.saasDescription) {
+      refinedDescription = currentContext.saasDescription;
+    }
+
     // Retrieve relevant architectural, RLS, engineering excellence, and security/compliance best practices from the knowledge base
     const architecturePrinciples = await this.ragSystem.search(
       "Clean Architecture and Multi-Tenant RLS Best Practices",
@@ -45,12 +62,12 @@ export class ArchitectAgent {
       .join("\n\n");
 
     // 1. Generate SQL Schema
-    const sqlSchema = await this.sqlGenerator.generateSqlSchema(saasDescription + "\n\nArchitectural Context:\n" + combinedContext);
+    const sqlSchema = await this.sqlGenerator.generateSqlSchema(refinedDescription + "\n\nArchitectural Context:\n" + combinedContext);
 
     // 2. Generate API Specification (OpenAPI)
     const apiSpecPrompt = `Based on the following SaaS description, generated PostgreSQL schema, and architectural best practices, create an OpenAPI 3.0 specification (YAML format) for the core API endpoints. Focus on CRUD operations for the main entities described. Include paths, methods, request/response bodies, and appropriate status codes.
 
-SaaS Description: ${saasDescription}
+SaaS Description: ${refinedDescription}
 
 PostgreSQL Schema:
 ${sqlSchema}
@@ -70,6 +87,14 @@ Provide only the YAML content, no additional text.`;
 
     const apiSpec = apiSpecResponse.choices[0].message.content?.trim();
     if (!apiSpec) {
+      if (this.orchestrator) {
+        await this.orchestrator.sendMessage({
+          sender: 'Architect Agent',
+          recipient: 'Orchestrator',
+          type: 'critical',
+          content: 'Failed to generate API specification.',
+        });
+      }
       throw new Error("Failed to generate API specification.");
     }
 
@@ -91,7 +116,32 @@ Provide only the SQL statements for RLS policies, no additional text or explanat
 
     const rlsPolicies = rlsPoliciesResponse.choices[0].message.content?.trim();
     if (!rlsPolicies) {
+      if (this.orchestrator) {
+        await this.orchestrator.sendMessage({
+          sender: 'Architect Agent',
+          recipient: 'Orchestrator',
+          type: 'critical',
+          content: 'Failed to generate RLS policies.',
+        });
+      }
       throw new Error("Failed to generate RLS policies.");
+    }
+
+    return {
+      sqlSchema,
+      apiSpec,
+      rlsPolicies,
+    };
+
+    if (this.orchestrator) {
+      await this.orchestrator.sendMessage({
+        sender: 'Architect Agent',
+        recipient: 'Orchestrator',
+        type: 'response',
+        content: 'Blueprint generated successfully.',
+        payload: { sqlSchema, apiSpec, rlsPolicies },
+      });
+      this.orchestrator.updateContext({ blueprint: { sqlSchema, apiSpec, rlsPolicies } });
     }
 
     return {

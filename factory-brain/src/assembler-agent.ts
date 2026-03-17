@@ -2,6 +2,7 @@ import { execa } from 'execa';
 import fs from 'fs/promises';
 import path from 'path';
 import { KnowledgeExtractorAgent } from './knowledge-extractor-agent';
+import { QaAgent } from './qa-agent';
 
 interface AssemblerInput {
   appName: string;
@@ -26,7 +27,7 @@ export class AssemblerAgent {
   private knowledgeExtractorAgent: KnowledgeExtractorAgent;
 
   constructor() {
-    this.baseAppPath = path.join(process.cwd(), 'apps', 'saas-001-booking');
+    this.baseAppPath = path.join(process.cwd(), 'apps', 'saas-001-booking'); // Base template for new micro-frontends
     this.appsDir = path.join(process.cwd(), 'apps');
     this.knowledgeExtractorAgent = new KnowledgeExtractorAgent();
   }
@@ -34,8 +35,14 @@ export class AssemblerAgent {
   private async copyBaseApp(newAppName: string): Promise<string> {
     const targetAppPath = path.join(this.appsDir, newAppName);
     await fs.mkdir(targetAppPath, { recursive: true });
+    // Copy base app as a micro-frontend
     await execa('cp', ['-r', this.baseAppPath + '/.', targetAppPath]);
-    console.log(`Copied base app to ${targetAppPath}`);
+    // Modify package.json for micro-frontend setup (e.g., unique name, specific build script)
+    const packageJsonPath = path.join(targetAppPath, 'package.json');
+    let packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+    packageJsonContent = packageJsonContent.replace(/"name": ".*?"/, `"name": "@saas-factory/${newAppName}"`);
+    await fs.writeFile(packageJsonPath, packageJsonContent);
+    console.log(`Copied base app as micro-frontend to ${targetAppPath}`);
     return targetAppPath;
   }
 
@@ -84,6 +91,7 @@ export class AssemblerAgent {
     // Further steps: generate API routes based on apiSpec, generate basic UI components/pages
 
     // Automatically extract and store knowledge after assembly
+    // Automatically extract and store knowledge after assembly
     await this.knowledgeExtractorAgent.extractAndStoreKnowledge(
       input.appName,
       input.saasDescription,
@@ -92,6 +100,26 @@ export class AssemblerAgent {
       null, // Landing page content is not directly available here, but can be passed if needed
       null  // Growth plan is not directly available here, but can be passed if needed
     );
+
+    // Placeholder for generating Playwright tests
+        // Call the QaAgent to generate tests
+    const qaAgent = new QaAgent();
+    const { tests: generatedTests, messages: qaMessages, context: qaContext } = await qaAgent.generateTests({
+      saasDescription: input.saasDescription,
+      appName: newAppName,
+      generatedTheme: input.theme,
+      generatedBlueprint: input.blueprint,
+      generatedLandingPage: null, // This would ideally come from a previous step
+      generatedGrowthPlan: null, // This would ideally come from a previous step
+      context: null, // Pass the current context if available
+    });
+    console.log(`Generated QA Tests for ${newAppName}: ${generatedTests.testSummary}`);
+    // Save the generated tests to the new app directory
+    const testFilePath = path.join(targetAppPath, 'e2e', 'saas.spec.ts');
+    await fs.mkdir(path.dirname(testFilePath), { recursive: true });
+    await fs.writeFile(testFilePath, generatedTests.playwrightTests);
+    console.log(`Playwright tests saved to ${testFilePath}`);
+
 
     return `New SaaS application '${newAppName}' assembled at ${targetAppPath}`;
   }
