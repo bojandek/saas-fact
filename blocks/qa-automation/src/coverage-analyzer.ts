@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { CoverageReport, QAMetrics } from './types';
+import { CoverageReport, QAMetrics } from './types.js';
 
 const logger = pino();
 

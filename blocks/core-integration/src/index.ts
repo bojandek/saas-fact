@@ -1,4 +1,4 @@
-export { SaaSFactoryCoreIntegration, default } from './integration';
+export { SaaSFactoryCoreIntegration, default } from './integration.js';
 
 // Re-export QA components
 export {

@@ -1,6 +1,6 @@
 import { chromium, firefox, webkit, Browser, BrowserContext, Page } from '@playwright/test';
 import pino from 'pino';
-import { E2ETestScenario, TestResult } from './types';
+import { E2ETestScenario, TestResult } from './types.js';
 
 const logger = pino();
 

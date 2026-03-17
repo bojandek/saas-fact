@@ -1,208 +1,178 @@
+import * as crypto from 'crypto';
+
 /**
- * Webhooks Block
- * Reliable webhook delivery with signing, retries, and idempotency
+ * @interface Webhook
+ * @description Represents a registered webhook.
  */
-
-import { createClient } from '@supabase/supabase-js'
-import { Webhook as SvixWebhook } from 'svix'
-
-export interface WebhookEndpoint {
-  id: string
-  url: string
-  version: number
-  description?: string
-  enabled: boolean
-  events: string[] // ['user.signup', 'payment.completed', '*']
-  created_at: string
+export interface Webhook {
+  /**
+   * Unique identifier for the webhook.
+   */
+  id: string;
+  /**
+   * The URL where the webhook payload will be sent.
+   */
+  url: string;
+  /**
+   * The secret used to sign and verify webhook payloads.
+   */
+  secret: string;
+  /**
+   * Optional metadata associated with the webhook.
+   */
+  metadata?: Record<string, any>;
 }
 
-export interface WebhookEvent {
-  id: string
-  type: string
-  data: Record<string, any>
-  timestamp: string
+/**
+ * @interface WebhookRegistrationOptions
+ * @description Options for registering a new webhook.
+ */
+export interface WebhookRegistrationOptions {
+  /**
+   * Optional metadata to associate with the webhook.
+   */
+  metadata?: Record<string, any>;
 }
 
-export interface WebhookDelivery {
-  id: string
-  event_id: string
-  endpoint_id: string
-  status: 'pending' | 'delivered' | 'failed'
-  attempts: number
-  last_error?: string
-  next_retry?: string
+/**
+ * @interface WebhookSendOptions
+ * @description Options for sending a webhook, including retry logic configuration.
+ */
+export interface WebhookSendOptions {
+  /**
+   * The maximum number of retry attempts for sending the webhook.
+   * Defaults to 3.
+   */
+  maxRetries?: number;
+  /**
+   * The initial delay in milliseconds before the first retry.
+   * Defaults to 1000 (1 second).
+   */
+  initialRetryDelayMs?: number;
+  /**
+   * The backoff factor for exponential retry delays. E.g., 2 for 1s, 2s, 4s, 8s...
+   * Defaults to 2.
+   */
+  retryBackoffFactor?: number;
 }
 
-export class WebhookManager {
-  private supabase: ReturnType<typeof createClient>
-  private svix: SvixWebhook
-
-  constructor() {
-    this.supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    )
-    this.svix = new SvixWebhook(process.env.SVIX_AUTH_TOKEN || '')
-  }
+/**
+ * @class WebhookService
+ * @description Provides functionalities for webhook registration, HMAC signature verification, and sending webhooks with retry logic.
+ */
+export class WebhookService {
+  private registeredWebhooks: Map<string, Webhook> = new Map();
 
   /**
-   * Create webhook endpoint
+   * Registers a new webhook.
+   * @param url The URL where the webhook payload will be sent.
+   * @param secret The secret key used for HMAC signature generation and verification.
+   * @param options Optional registration options.
+   * @returns The registered Webhook object.
    */
-  async createEndpoint(
-    url: string,
-    events: string[],
-    description?: string
-  ): Promise<WebhookEndpoint> {
-    const { data, error } = await this.supabase
-      .from('webhook_endpoints')
-      .insert({
-        url,
-        events,
-        description,
-        enabled: true,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  }
-
-  /**
-   * Emit webhook event
-   */
-  async emit(
-    eventType: string,
-    data: Record<string, any>
-  ): Promise<void> {
-    // Save event
-    const { data: event, error: eventError } = await this.supabase
-      .from('webhook_events')
-      .insert({
-        type: eventType,
-        data,
-      })
-      .select()
-      .single()
-
-    if (eventError) throw eventError
-
-    // Get matching endpoints
-    const { data: endpoints, error: endpointError } = await this.supabase
-      .from('webhook_endpoints')
-      .select('*')
-      .eq('enabled', true)
-      .filter('events', 'cs', `["${eventType}","*"]`)
-
-    if (endpointError) throw endpointError
-
-    // Create deliveries
-    for (const endpoint of endpoints) {
-      await this.supabase.from('webhook_deliveries').insert({
-        event_id: event.id,
-        endpoint_id: endpoint.id,
-        status: 'pending',
-        attempts: 0,
-      })
-
-      // Attempt delivery
-      this.attemptDelivery(event.id, endpoint.id).catch((error) => {
-        console.error('Webhook delivery failed:', error)
-      })
-    }
-  }
-
-  /**
-   * Attempt webhook delivery with retry logic
-   */
-  private async attemptDelivery(
-    eventId: string,
-    endpointId: string,
-    attempt: number = 0
-  ): Promise<void> {
-    const maxAttempts = 5
-    const backoffMs = Math.min(1000 * Math.pow(2, attempt), 300000) // Exponential backoff, max 5 min
-
-    if (attempt > maxAttempts) {
-      await this.supabase
-        .from('webhook_deliveries')
-        .update({ status: 'failed' })
-        .eq('event_id', eventId)
-        .eq('endpoint_id', endpointId)
-      return
+  public registerWebhook(url: string, secret: string, options?: WebhookRegistrationOptions): Webhook {
+    if (!url || !secret) {
+      throw new Error('Webhook URL and secret are required.');
     }
 
-    // Get event and endpoint
-    const [{ data: event }, { data: endpoint }] = await Promise.all([
-      this.supabase.from('webhook_events').select('*').eq('id', eventId).single(),
-      this.supabase.from('webhook_endpoints').select('*').eq('id', endpointId).single(),
-    ])
+    const id = crypto.randomBytes(16).toString('hex');
+    const newWebhook: Webhook = {
+      id,
+      url,
+      secret,
+      metadata: options?.metadata,
+    };
+    this.registeredWebhooks.set(id, newWebhook);
+    return newWebhook;
+  }
 
-    // Create signed payload
-    const payload = JSON.stringify(event)
-    const signature = this.svix.sign('webhook_secret', payload, Math.floor(Date.now() / 1000))
+  /**
+   * Retrieves a registered webhook by its ID.
+   * @param id The ID of the webhook to retrieve.
+   * @returns The Webhook object if found, otherwise undefined.
+   */
+  public getWebhook(id: string): Webhook | undefined {
+    return this.registeredWebhooks.get(id);
+  }
 
-    try {
-      const response = await fetch(endpoint.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Id': event.id,
-          'X-Webhook-Timestamp': event.timestamp,
-          'X-Webhook-Signature': signature,
-        },
-        body: payload,
-      })
+  /**
+   * Verifies the HMAC SHA256 signature of a webhook payload.
+   * @param payload The raw payload string received from the webhook.
+   * @param signature The signature string, typically from a request header (e.g., 'sha256=...');
+   * @param secret The secret key used to generate the expected signature.
+   * @returns True if the signature is valid, false otherwise.
+   */
+  public verifySignature(payload: string, signature: string, secret: string): boolean {
+    if (!payload || !signature || !secret) {
+      return false;
+    }
 
-      if (response.ok) {
-        await this.supabase
-          .from('webhook_deliveries')
-          .update({
-            status: 'delivered',
-            attempts: attempt + 1,
-          })
-          .eq('event_id', eventId)
-          .eq('endpoint_id', endpointId)
-        return
+    const [algorithm, hash] = signature.split('=');
+    if (algorithm !== 'sha256' || !hash) {
+      return false; // Only SHA256 is supported, or signature format is incorrect
+    }
+
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(payload);
+    const expectedHash = hmac.digest('hex');
+
+    // Use crypto.timingSafeEqual to prevent timing attacks
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expectedHash));
+  }
+
+  /**
+   * Sends a webhook payload to the specified URL with retry logic.
+   * @param webhook The webhook object containing URL and secret.
+   * @param payload The data to send in the webhook body. Will be JSON.stringified.
+   * @param options Optional sending options, including retry configuration.
+   * @throws Error if the webhook sending fails after all retries.
+   */
+  public async sendWebhook(webhook: Webhook, payload: any, options?: WebhookSendOptions): Promise<void> {
+    const maxRetries = options?.maxRetries ?? 3;
+    let currentDelay = options?.initialRetryDelayMs ?? 1000; // 1 second
+    const retryBackoffFactor = options?.retryBackoffFactor ?? 2;
+
+    const payloadString = JSON.stringify(payload);
+    const signature = `sha256=${this.generateHmacSignature(payloadString, webhook.secret)}`;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(webhook.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Hub-Signature-256': signature,
+          },
+          body: payloadString,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Webhook delivery failed with status: ${response.status} ${response.statusText}`);
+        }
+        console.log(`Webhook successfully delivered to ${webhook.url} on attempt ${attempt + 1}`);
+        return; // Success
+      } catch (error: any) {
+        console.warn(`Attempt ${attempt + 1} failed for webhook ${webhook.url}: ${error.message}`);
+        if (attempt < maxRetries) {
+          console.log(`Retrying in ${currentDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, currentDelay));
+          currentDelay *= retryBackoffFactor;
+        } else {
+          throw new Error(`Failed to deliver webhook to ${webhook.url} after ${maxRetries + 1} attempts: ${error.message}`);
+        }
       }
-
-      throw new Error(`HTTP ${response.status}`)
-    } catch (error) {
-      // Schedule retry
-      const nextRetry = new Date(Date.now() + backoffMs)
-
-      await this.supabase
-        .from('webhook_deliveries')
-        .update({
-          attempts: attempt + 1,
-          last_error: String(error),
-          next_retry: nextRetry.toISOString(),
-        })
-        .eq('event_id', eventId)
-        .eq('endpoint_id', endpointId)
-
-      // Schedule next attempt
-      setTimeout(
-        () => this.attemptDelivery(eventId, endpointId, attempt + 1),
-        backoffMs
-      )
     }
   }
 
   /**
-   * Get webhook deliveries for monitoring
+   * Generates an HMAC SHA256 signature for a given payload and secret.
+   * @param payload The raw payload string to sign.
+   * @param secret The secret key to use for signing.
+   * @returns The HMAC SHA256 signature in hexadecimal format.
    */
-  async getDeliveries(endpointId: string, limit: number = 100) {
-    const { data, error } = await this.supabase
-      .from('webhook_deliveries')
-      .select('*')
-      .eq('endpoint_id', endpointId)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (error) throw error
-    return data
+  private generateHmacSignature(payload: string, secret: string): string {
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(payload);
+    return hmac.digest('hex');
   }
 }
-
-export const webhooks = new WebhookManager()

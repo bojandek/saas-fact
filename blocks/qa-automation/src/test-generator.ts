@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import pino from 'pino';
-import type { E2ETestScenario } from './types';
+import type { E2ETestScenario } from './types.js';
 
 const logger = pino();
 

@@ -1,6 +1,6 @@
-export { TestGenerator } from './test-generator';
-export { CoverageAnalyzer } from './coverage-analyzer';
-export { E2EOrchestrator } from './e2e-orchestrator';
+export { TestGenerator } from './test-generator.js';
+export { CoverageAnalyzer } from './coverage-analyzer.js';
+export { E2EOrchestrator } from './e2e-orchestrator.js';
 export type {
   TestType,
   TestResult,
@@ -8,7 +8,7 @@ export type {
   CoverageReport,
   E2ETestScenario,
   QAMetrics
-} from './types';
+} from './types.js';
 
 export {
   TestTypeSchema,
@@ -17,7 +17,7 @@ export {
   CoverageReportSchema,
   E2ETestScenarioSchema,
   QAMetricsSchema
-} from './types';
+} from './types.js';
 
 /**
  * SaaS Factory QA Automation Module

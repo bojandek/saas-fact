@@ -1,199 +1,190 @@
 /**
- * Advanced Multi-Tenant Block
- * Implements role-based access control and organization hierarchy
- * Based on Postiz-app's multi-tenancy model
+ * @file This module provides a minimal but real implementation for an Advanced Multi-Tenant RBAC (Role-Based Access Control) system
+ * with Owner/Admin/User/Viewer roles and organizational hierarchy.
  */
 
-import { PrismaClient } from '@prisma/client';
-
+/**
+ * Defines the possible roles within the multi-tenant system.
+ * Each role has a specific set of permissions, with Owner being the highest and Viewer the lowest.
+ */
 export enum UserRole {
-  OWNER = 'OWNER',
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-  VIEWER = 'VIEWER',
+  Owner = 'Owner',
+  Admin = 'Admin',
+  User = 'User',
+  Viewer = 'Viewer',
 }
 
-interface OrganizationMember {
+/**
+ * Represents a user in the system.
+ */
+export interface User {
+  /** Unique identifier for the user. */
   id: string;
-  userId: string;
-  organizationId: string;
+  /** The name of the user. */
+  name: string;
+  /** The email address of the user. */
+  email: string;
+  /** The role of the user within their assigned organization. */
   role: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface OrganizationSettings {
-  id: string;
+  /** The ID of the organization the user belongs to. */
   organizationId: string;
-  maxTeamMembers: number;
-  maxProjects: number;
-  allowPublicSharing: boolean;
-  enforceSSO: boolean;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-export class AdvancedMultiTenantBlock {
-  private prisma: PrismaClient;
+/**
+ * Represents an organization in the multi-tenant hierarchy.
+ */
+export interface Organization {
+  /** Unique identifier for the organization. */
+  id: string;
+  /** The name of the organization. */
+  name: string;
+  /** Optional ID of the parent organization, establishing a hierarchy. */
+  parentOrganizationId?: string;
+}
 
-  constructor() {
-    this.prisma = new PrismaClient();
+/**
+ * A simplified permission set for demonstration purposes.
+ * In a real application, this would be more granular.
+ */
+export type Permission = 'read' | 'write' | 'manage_users' | 'manage_billing' | 'view_reports';
+
+/**
+ * Manages Role-Based Access Control (RBAC) and organizational hierarchy.
+ * This class provides methods to check permissions, manage users within organizations,
+ * and navigate the organizational structure.
+ */
+export class RBACService {
+  private users: User[];
+  private organizations: Organization[];
+  private rolePermissions: Map<UserRole, Set<Permission>>;
+
+  /**
+   * Initializes the RBACService with a list of users and organizations.
+   * @param initialUsers An array of initial users.
+   * @param initialOrganizations An array of initial organizations.
+   */
+  constructor(initialUsers: User[] = [], initialOrganizations: Organization[] = []) {
+    this.users = initialUsers;
+    this.organizations = initialOrganizations;
+    this.rolePermissions = new Map<UserRole, Set<Permission>>();
+    this.initializeRolePermissions();
   }
 
   /**
-   * Add a user to an organization with a specific role
+   * Sets up the default permissions for each role.
+   * This can be extended or loaded from a configuration in a real application.
    */
-  async addMemberToOrganization(
-    userId: string,
-    organizationId: string,
-    role: UserRole = UserRole.USER
-  ): Promise<OrganizationMember> {
-    return this.prisma.organizationMember.create({
-      data: {
-        userId,
-        organizationId,
-        role,
-      },
-    });
+  private initializeRolePermissions(): void {
+    this.rolePermissions.set(UserRole.Viewer, new Set(['read', 'view_reports']));
+    this.rolePermissions.set(UserRole.User, new Set(['read', 'write', 'view_reports']));
+    this.rolePermissions.set(UserRole.Admin, new Set(['read', 'write', 'manage_users', 'view_reports']));
+    this.rolePermissions.set(UserRole.Owner, new Set(['read', 'write', 'manage_users', 'manage_billing', 'view_reports']));
   }
 
   /**
-   * Update a user's role in an organization
+   * Checks if a user has a specific permission within their organization.
+   * @param userId The ID of the user.
+   * @param permission The permission to check.
+   * @returns True if the user has the permission, false otherwise.
    */
-  async updateMemberRole(
-    userId: string,
-    organizationId: string,
-    newRole: UserRole
-  ): Promise<OrganizationMember> {
-    return this.prisma.organizationMember.update({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
-      },
-      data: {
-        role: newRole,
-      },
-    });
-  }
-
-  /**
-   * Remove a user from an organization
-   */
-  async removeMemberFromOrganization(
-    userId: string,
-    organizationId: string
-  ): Promise<void> {
-    await this.prisma.organizationMember.delete({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
-      },
-    });
-  }
-
-  /**
-   * Get all members of an organization
-   */
-  async getOrganizationMembers(organizationId: string): Promise<OrganizationMember[]> {
-    return this.prisma.organizationMember.findMany({
-      where: { organizationId },
-    });
-  }
-
-  /**
-   * Check if a user has a specific role in an organization
-   */
-  async hasRole(
-    userId: string,
-    organizationId: string,
-    requiredRole: UserRole
-  ): Promise<boolean> {
-    const member = await this.prisma.organizationMember.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId,
-        },
-      },
-    });
-
-    if (!member) return false;
-
-    const roleHierarchy = {
-      [UserRole.OWNER]: 4,
-      [UserRole.ADMIN]: 3,
-      [UserRole.USER]: 2,
-      [UserRole.VIEWER]: 1,
-    };
-
-    return roleHierarchy[member.role] >= roleHierarchy[requiredRole];
-  }
-
-  /**
-   * Get organization settings
-   */
-  async getOrganizationSettings(organizationId: string): Promise<OrganizationSettings> {
-    const settings = await this.prisma.organizationSettings.findUnique({
-      where: { organizationId },
-    });
-
-    if (!settings) {
-      // Create default settings if they don't exist
-      return this.prisma.organizationSettings.create({
-        data: {
-          organizationId,
-          maxTeamMembers: 50,
-          maxProjects: 100,
-          allowPublicSharing: true,
-          enforceSSO: false,
-        },
-      });
+  public hasPermission(userId: string, permission: Permission): boolean {
+    const user = this.users.find(u => u.id === userId);
+    if (!user) {
+      return false;
     }
-
-    return settings;
+    const permissions = this.rolePermissions.get(user.role);
+    return permissions ? permissions.has(permission) : false;
   }
 
   /**
-   * Update organization settings
+   * Assigns a new role to a user within their organization.
+   * @param userId The ID of the user.
+   * @param newRole The new role to assign.
+   * @returns True if the role was successfully assigned, false if the user was not found.
    */
-  async updateOrganizationSettings(
-    organizationId: string,
-    settings: Partial<OrganizationSettings>
-  ): Promise<OrganizationSettings> {
-    return this.prisma.organizationSettings.upsert({
-      where: { organizationId },
-      update: settings,
-      create: {
-        organizationId,
-        ...settings,
-      } as any,
-    });
+  public assignRole(userId: string, newRole: UserRole): boolean {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return false;
+    }
+    this.users[userIndex].role = newRole;
+    return true;
   }
 
   /**
-   * Check if an organization can add more members
+   * Retrieves all users belonging to a specific organization.
+   * @param organizationId The ID of the organization.
+   * @returns An array of users in the specified organization.
    */
-  async canAddMember(organizationId: string): Promise<boolean> {
-    const settings = await this.getOrganizationSettings(organizationId);
-    const memberCount = await this.prisma.organizationMember.count({
-      where: { organizationId },
-    });
-
-    return memberCount < settings.maxTeamMembers;
+  public getUsersInOrganization(organizationId: string): User[] {
+    return this.users.filter(user => user.organizationId === organizationId);
   }
 
   /**
-   * Get all organizations for a user
+   * Retrieves an organization by its ID.
+   * @param organizationId The ID of the organization.
+   * @returns The Organization object if found, otherwise undefined.
    */
-  async getUserOrganizations(userId: string): Promise<OrganizationMember[]> {
-    return this.prisma.organizationMember.findMany({
-      where: { userId },
-    });
+  public getOrganizationById(organizationId: string): Organization | undefined {
+    return this.organizations.find(org => org.id === organizationId);
+  }
+
+  /**
+   * Retrieves all child organizations for a given parent organization.
+   * @param parentOrganizationId The ID of the parent organization.
+   * @returns An array of child organizations.
+   */
+  public getChildOrganizations(parentOrganizationId: string): Organization[] {
+    return this.organizations.filter(org => org.parentOrganizationId === parentOrganizationId);
+  }
+
+  /**
+   * Retrieves all organizations in the hierarchy starting from a given organization (inclusive).
+   * This performs a depth-first search to find all descendants.
+   * @param startOrganizationId The ID of the organization to start the hierarchy search from.
+   * @returns An array of organizations in the hierarchy.
+   */
+  public getOrganizationsInHierarchy(startOrganizationId: string): Organization[] {
+    const hierarchy: Organization[] = [];
+    const queue: string[] = [startOrganizationId];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+      const currentOrgId = queue.shift();
+      if (!currentOrgId || visited.has(currentOrgId)) {
+        continue;
+      }
+
+      visited.add(currentOrgId);
+      const currentOrg = this.getOrganizationById(currentOrgId);
+      if (currentOrg) {
+        hierarchy.push(currentOrg);
+        const children = this.getChildOrganizations(currentOrg.id);
+        for (const child of children) {
+          queue.push(child.id);
+        }
+      }
+    }
+    return hierarchy;
+  }
+
+  /**
+   * Adds a new user to the system.
+   * @param user The user object to add.
+   */
+  public addUser(user: User): void {
+    if (!this.users.some(u => u.id === user.id)) {
+      this.users.push(user);
+    }
+  }
+
+  /**
+   * Adds a new organization to the system.
+   * @param organization The organization object to add.
+   */
+  public addOrganization(organization: Organization): void {
+    if (!this.organizations.some(org => org.id === organization.id)) {
+      this.organizations.push(organization);
+    }
   }
 }
-
-export type { OrganizationMember, OrganizationSettings };
