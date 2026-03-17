@@ -1,6 +1,6 @@
 
-> @saas-factory/skill-store@0.0.1 type-check /home/ubuntu/saas-fact/blocks/skill-store
-> tsc --noEmit
+> @saas-factory/qa-automation@1.0.0 build /home/ubuntu/saas-fact/blocks/qa-automation
+> tsc
 
 sh: 1: tsc: not found
  ELIFECYCLE  Command failed.

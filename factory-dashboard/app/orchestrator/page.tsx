@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react';
-import { WarRoomOrchestrator, AgentMessage, AgentContext } from '../../factory-brain/src/war-room-orchestrator';
+import { AgentMessage, AgentContext } from '../../factory-brain/src/war-room-orchestrator';
 import { Button } from '@saas-factory/ui';
 
 interface GeneratedTheme {
