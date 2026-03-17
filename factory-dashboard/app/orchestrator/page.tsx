@@ -17,7 +17,47 @@ interface ArchitectBlueprint {
   rlsPolicies: string;
 }
 
-type Step = 'description' | 'theme' | 'blueprint' | 'assemble' | 'complete';
+interface LandingPageContent {
+  hero: {
+    headline: string;
+    subheadline: string;
+    callToAction: string;
+  };
+  features: Array<{
+    title: string;
+    description: string;
+  }>;
+  pricing: Array<{
+    planName: string;
+    price: string;
+    features: string[];
+    callToAction: string;
+  }>;
+  testimonials: Array<{
+    quote: string;
+    author: string;
+    company: string;
+  }>;
+}
+
+interface GrowthPlan {
+  seo: {
+    metaTitle: string;
+    metaDescription: string;
+    keywords: string[];
+  };
+  socialMediaPosts: Array<{
+    platform: string;
+    content: string;
+    hashtags: string[];
+  }>;
+  emailCampaign: Array<{
+    subject: string;
+    body: string;
+  }>;
+}
+
+type Step = 'description' | 'theme' | 'blueprint' | 'landing' | 'growth' | 'deploy' | 'complete';
 
 export default function OrchestratorPage() {
   const [currentStep, setCurrentStep] = useState<Step>('description');
@@ -25,9 +65,11 @@ export default function OrchestratorPage() {
   const [appName, setAppName] = useState('');
   const [theme, setTheme] = useState<GeneratedTheme | null>(null);
   const [blueprint, setBlueprint] = useState<ArchitectBlueprint | null>(null);
+  const [landingPage, setLandingPage] = useState<LandingPageContent | null>(null);
+  const [growthPlan, setGrowthPlan] = useState<GrowthPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [assemblyResult, setAssemblyResult] = useState<string | null>(null);
+  const [deploymentResult, setDeploymentResult] = useState<string | null>(null);
 
   const handleGenerateTheme = async () => {
     setLoading(true);
@@ -63,7 +105,7 @@ export default function OrchestratorPage() {
       if (!response.ok) throw new Error('Failed to generate blueprint');
       const data = await response.json();
       setBlueprint(data);
-      setCurrentStep('assemble');
+      setCurrentStep('landing');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -71,7 +113,49 @@ export default function OrchestratorPage() {
     }
   };
 
-  const handleAssemble = async () => {
+  const handleGenerateLandingPage = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate-landing-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: saasDescription }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate landing page');
+      const data = await response.json();
+      setLandingPage(data);
+      setCurrentStep('growth');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateGrowthPlan = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate-growth-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: saasDescription }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate growth plan');
+      const data = await response.json();
+      setGrowthPlan(data);
+      setCurrentStep('deploy');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeploy = async () => {
     if (!theme || !blueprint) {
       setError('Theme and blueprint must be generated first');
       return;
@@ -80,20 +164,21 @@ export default function OrchestratorPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/assemble-saas', {
+      const response = await fetch('/api/deploy-coolify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          appName,
-          saasDescription,
-          theme,
-          blueprint,
+          appName: appName.toLowerCase().replace(/\s/g, '-'),
+          gitRepository: `https://github.com/bojandek/saas-fact`,
+          branch: 'main',
+          environment: 'production',
+          domain: `${appName.toLowerCase().replace(/\s/g, '-')}.saas-factory.dev`,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to assemble SaaS');
+      if (!response.ok) throw new Error('Failed to deploy');
       const data = await response.json();
-      setAssemblyResult(data.message);
+      setDeploymentResult(data.message);
       setCurrentStep('complete');
     } catch (err: any) {
       setError(err.message);
@@ -105,27 +190,27 @@ export default function OrchestratorPage() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-4xl font-bold mb-2">SaaS Factory Orchestrator</h1>
-      <p className="text-gray-600 mb-8">Build a complete SaaS in minutes: Describe → Design → Architecture → Code</p>
+      <p className="text-gray-600 mb-8">Build, Market & Deploy: Describe → Design → Architecture → Content → Growth → Live</p>
 
       {/* Step Indicator */}
-      <div className="flex justify-between mb-8">
-        {(['description', 'theme', 'blueprint', 'assemble', 'complete'] as Step[]).map((step, idx) => (
-          <div key={step} className="flex items-center">
+      <div className="flex justify-between mb-8 overflow-x-auto">
+        {(['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'] as Step[]).map((step, idx) => (
+          <div key={step} className="flex items-center flex-shrink-0">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                 currentStep === step
                   ? 'bg-blue-500 text-white'
-                  : ['description', 'theme', 'blueprint', 'assemble'].includes(step) && 
-                    ['description', 'theme', 'blueprint', 'assemble', 'complete'].indexOf(step) <= 
-                    ['description', 'theme', 'blueprint', 'assemble', 'complete'].indexOf(currentStep)
+                  : ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy'].includes(step) && 
+                    ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'].indexOf(step) <= 
+                    ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'].indexOf(currentStep)
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-300 text-gray-600'
               }`}
             >
               {idx + 1}
             </div>
-            <span className="ml-2 text-sm font-medium">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
-            {idx < 4 && <div className="w-8 h-1 bg-gray-300 mx-2"></div>}
+            <span className="ml-2 text-xs font-medium whitespace-nowrap">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
+            {idx < 6 && <div className="w-4 h-1 bg-gray-300 mx-1 flex-shrink-0"></div>}
           </div>
         ))}
       </div>
@@ -173,17 +258,6 @@ export default function OrchestratorPage() {
                   <span>{theme.secondaryColor}</span>
                 </div>
               </div>
-              <div>
-                <p className="font-medium">Accent Color:</p>
-                <div className="flex items-center space-x-2">
-                  <div style={{ backgroundColor: theme.accentColor, width: '40px', height: '40px', borderRadius: '4px' }}></div>
-                  <span>{theme.accentColor}</span>
-                </div>
-              </div>
-              <div>
-                <p className="font-medium">Font Family:</p>
-                <span>{theme.fontFamily}</span>
-              </div>
             </div>
             <Button onClick={handleGenerateBlueprint} disabled={loading}>
               {loading ? 'Generating Blueprint...' : 'Generate Architecture (Architect Agent)'}
@@ -194,37 +268,50 @@ export default function OrchestratorPage() {
         {currentStep === 'blueprint' && blueprint && (
           <>
             <h2 className="text-2xl font-semibold mb-4">Step 3: Your Generated Blueprint</h2>
-            <div className="space-y-4 mb-4">
-              <div>
-                <p className="font-medium mb-2">SQL Schema:</p>
-                <pre className="bg-gray-100 p-3 rounded-md overflow-auto text-xs max-h-40">
-                  <code>{blueprint.sqlSchema}</code>
-                </pre>
-              </div>
-              <div>
-                <p className="font-medium mb-2">API Spec (OpenAPI):</p>
-                <pre className="bg-gray-100 p-3 rounded-md overflow-auto text-xs max-h-40">
-                  <code>{blueprint.apiSpec}</code>
-                </pre>
-              </div>
-            </div>
-            <Button onClick={handleAssemble} disabled={loading}>
-              {loading ? 'Assembling...' : 'Assemble SaaS (The Assembler)'}
+            <p className="text-gray-600 mb-4">✓ Database schema, API spec, and RLS policies generated</p>
+            <Button onClick={handleGenerateLandingPage} disabled={loading}>
+              {loading ? 'Generating Landing Page...' : 'Generate Landing Page'}
             </Button>
           </>
         )}
 
-        {currentStep === 'complete' && assemblyResult && (
+        {currentStep === 'landing' && landingPage && (
           <>
-            <h2 className="text-2xl font-semibold mb-4">✅ Your SaaS is Ready!</h2>
-            <p className="text-green-600 font-medium mb-4">{assemblyResult}</p>
-            <p className="text-gray-600 mb-4">Your new SaaS application has been generated with:</p>
+            <h2 className="text-2xl font-semibold mb-4">Step 4: Your Landing Page</h2>
+            <p className="text-gray-600 mb-4">✓ Hero, Features, Pricing & Testimonials generated</p>
+            <p><strong>Headline:</strong> {landingPage.hero.headline}</p>
+            <Button onClick={handleGenerateGrowthPlan} disabled={loading} className="mt-4">
+              {loading ? 'Generating Growth Plan...' : 'Generate Growth Plan'}
+            </Button>
+          </>
+        )}
+
+        {currentStep === 'growth' && growthPlan && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Step 5: Your Growth Plan</h2>
+            <p className="text-gray-600 mb-4">✓ SEO, Social Media & Email Campaign generated</p>
+            <p><strong>SEO Meta Title:</strong> {growthPlan.seo.metaTitle}</p>
+            <p><strong>Social Posts:</strong> {growthPlan.socialMediaPosts.length} posts ready</p>
+            <p><strong>Email Sequences:</strong> {growthPlan.emailCampaign.length} emails ready</p>
+            <Button onClick={handleDeploy} disabled={loading} className="mt-4">
+              {loading ? 'Deploying...' : 'Deploy to Coolify (Go Live)'}
+            </Button>
+          </>
+        )}
+
+        {currentStep === 'complete' && deploymentResult && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">✅ Your SaaS is Live!</h2>
+            <p className="text-green-600 font-medium mb-4">{deploymentResult}</p>
+            <p className="text-gray-600 mb-4">Your complete SaaS application is now deployed with:</p>
             <ul className="list-disc list-inside space-y-2 text-gray-600 mb-4">
               <li>Unique UI theme (Nano Banana)</li>
               <li>Complete database schema (Architect)</li>
               <li>API specification (OpenAPI)</li>
               <li>RLS policies for multi-tenant security</li>
-              <li>Scaffolded code ready for deployment</li>
+              <li>Landing page with marketing copy</li>
+              <li>Growth plan (SEO, Social, Email)</li>
+              <li>Live on Coolify infrastructure</li>
             </ul>
             <Button onClick={() => window.location.href = '/projects'}>
               View Your Projects
