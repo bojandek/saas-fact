@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { RAGSystem } from './rag';
+import { logger } from './utils/logger'
 
 interface ExtractedKnowledge {
   title: string;
@@ -87,9 +88,9 @@ export class KnowledgeExtractorAgent {
         category: category,
         created_at: new Date().toISOString(),
       });
-      console.log(`Knowledge for ${appName} extracted and stored in RAG.`);
+      logger.info(`Knowledge for ${appName} extracted and stored in RAG.`);
     } else {
-      console.warn(`Failed to summarize knowledge for ${appName}. Not storing.`);
+      logger.warn(`Failed to summarize knowledge for ${appName}. Not storing.`);
     }
   }
 }

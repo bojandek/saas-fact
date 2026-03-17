@@ -5,6 +5,7 @@
 
 import { ExpertSystemEnhancements } from './expert-system-enhancements'
 import { getMemory } from './memory-session'
+import { logger } from './utils/logger'
 
 let expertSystem: ExpertSystemEnhancements | null = null
 
@@ -15,7 +16,7 @@ export function initializeExpertSystem(sessionId: string): ExpertSystemEnhanceme
   if (expertSystem) return expertSystem
 
   expertSystem = new ExpertSystemEnhancements(sessionId)
-  console.log('🧠🔬 Expert System initialized')
+  logger.info('🧠🔬 Expert System initialized')
 
   return expertSystem
 }
@@ -52,7 +53,7 @@ export async function recordAndLearnFromError(
     preventionSteps
   )
 
-  console.log(
+  logger.info(
     `✅ Error learned: ${errorType}\n  Prevention: ${preventionSteps.join(' → ')}`
   )
 }
@@ -112,7 +113,7 @@ export async function auditDecision(
     }
   )
 
-  console.log(`📋 Decision audited: ${recommendation} → ${result}`)
+  logger.info(`📋 Decision audited: ${recommendation} → ${result}`)
 }
 
 /**
@@ -140,7 +141,7 @@ export async function buildDomainExpertise(
     bestPractices
   )
 
-  console.log(
+  logger.info(
     `🎯 Expertise built: ${domain} with ${successfulPatterns.length} successful patterns`
   )
 }
@@ -214,7 +215,7 @@ export async function assessImplementationRisk(
   const emoji =
     assessment.risk_level === 'low' ? '✅' : assessment.risk_level === 'medium' ? '⚠️' : '🚨'
 
-  console.log(`${emoji} Risk Assessment: ${assessment.risk_level}`)
+  logger.info(`${emoji} Risk Assessment: ${assessment.risk_level}`)
 
   return {
     risk_level: assessment.risk_level,
@@ -238,7 +239,7 @@ export async function correctMistake(
 
   await expert.recordCorrection(whatYouRecommended, whatYouShouldHaveDone, whyItWasMistaken)
 
-  console.log(`🔄 Self-correction recorded: ${whatYouShouldHaveDone}`)
+  logger.info(`🔄 Self-correction recorded: ${whatYouShouldHaveDone}`)
 }
 
 /**
@@ -276,7 +277,7 @@ export async function shareYourExpertise(domain: string): Promise<void> {
   const expert = getExpertSystem()
   await expert.shareLearnings(domain, true)
 
-  console.log(`🤝 Your expertise in ${domain} shared with the community (anonymous)`)
+  logger.info(`🤝 Your expertise in ${domain} shared with the community (anonymous)`)
 }
 
 /**

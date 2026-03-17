@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from './utils/logger'
 
 interface CrawlResult {
   url: string;
@@ -17,7 +18,7 @@ export class OpenCrawlAgent {
   async crawl(query: string, limit: number = 1): Promise<CrawlResult[]> {
     try {
       // Simulate a crawl for now. In a real scenario, this would call an external service.
-      console.log(`Simulating crawl for query: ${query}`);
+      logger.info(`Simulating crawl for query: ${query}`);
       const simulatedResults: CrawlResult[] = [
         {
           url: `https://example.com/search?q=${encodeURIComponent(query)}`,
@@ -34,7 +35,7 @@ export class OpenCrawlAgent {
 
       return simulatedResults;
     } catch (error) {
-      console.error('OpenCrawlAgent error:', error);
+      logger.error('OpenCrawlAgent error:', error);
       throw new Error(`Failed to crawl for query: ${query}`);
     }
   }

@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { logger } from './utils/logger'
 
 interface ErrorPattern {
   id: string
@@ -112,7 +113,7 @@ export class ExpertSystemEnhancements {
     // Save to database
     await this.supabase.from('error_patterns').upsert(pattern)
 
-    console.log(`🚨 Error pattern recorded: ${errorType} (${pattern.occurrences} occurrences)`)
+    logger.info(`🚨 Error pattern recorded: ${errorType} (${pattern.occurrences} occurrences)`)
 
     return pattern
   }
@@ -187,7 +188,7 @@ export class ExpertSystemEnhancements {
     // Save to database
     await this.supabase.from('decision_audits').insert(audit)
 
-    console.log(
+    logger.info(
       `📋 Decision audit recorded: ${recommendation} → ${implementationResult}`
     )
 
@@ -245,7 +246,7 @@ export class ExpertSystemEnhancements {
       .from('domain_specializations')
       .upsert(specialization, { onConflict: 'domain' })
 
-    console.log(
+    logger.info(
       `🎯 Domain specialization: ${domain} (${(specialization.base_expertise * 100).toFixed(0)}% expertise)`
     )
 
@@ -391,7 +392,7 @@ export class ExpertSystemEnhancements {
     // Save to shared learnings database
     await this.supabase.from('shared_learnings').insert(sharableData)
 
-    console.log(
+    logger.info(
       `🤝 Shared learnings for ${domain} (${isAnonymous ? 'anonymous' : 'attributed'})`
     )
   }
@@ -424,7 +425,7 @@ export class ExpertSystemEnhancements {
       [reason]
     )
 
-    console.log(`🔄 Self-correction: ${originalRecommendation} → ${correctedRecommendation}`)
+    logger.info(`🔄 Self-correction: ${originalRecommendation} → ${correctedRecommendation}`)
   }
 
   /**

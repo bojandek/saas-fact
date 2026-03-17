@@ -4,6 +4,7 @@ import path from 'path';
 import { KnowledgeExtractorAgent } from './knowledge-extractor-agent';
 import { QaAgent } from './qa-agent';
 import { NanoBananaComponentGenerator, GeneratedComponent } from '../../packages/ui/src/lib/component-generator';
+import { logger } from './utils/logger'
 
 interface AssemblerInput {
   appName: string;
@@ -43,7 +44,7 @@ export class AssemblerAgent {
     let packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
     packageJsonContent = packageJsonContent.replace(/"name": ".*?"/, `"name": "@saas-factory/${newAppName}"`);
     await fs.writeFile(packageJsonPath, packageJsonContent);
-    console.log(`Copied base app as micro-frontend to ${targetAppPath}`);
+    logger.info(`Copied base app as micro-frontend to ${targetAppPath}`);
     return targetAppPath;
   }
 
@@ -59,7 +60,7 @@ export class AssemblerAgent {
     // Add more sophisticated theme application here (e.g., extend colors, fonts)
 
     await fs.writeFile(tailwindConfigPath, tailwindConfigContent);
-    console.log(`Applied theme to ${appPath}/tailwind.config.ts`);
+    logger.info(`Applied theme to ${appPath}/tailwind.config.ts`);
   }
 
   private async applySqlSchema(sqlSchema: string) {
@@ -68,7 +69,7 @@ export class AssemblerAgent {
     const dbMigrationPath = path.join(this.appsDir, 'new-app-migrations', 'generated-schema.sql');
     await fs.mkdir(path.dirname(dbMigrationPath), { recursive: true });
     await fs.writeFile(dbMigrationPath, sqlSchema);
-    console.log(`Generated SQL schema saved to ${dbMigrationPath}`);
+    logger.info(`Generated SQL schema saved to ${dbMigrationPath}`);
     // Here you would typically run a command to apply this schema to Supabase
     // e.g., `supabase db diff migration --schema-file ${dbMigrationPath}`
   }
@@ -77,7 +78,7 @@ export class AssemblerAgent {
     const rlsPolicyPath = path.join(this.appsDir, 'new-app-migrations', 'generated-rls-policies.sql');
     await fs.mkdir(path.dirname(rlsPolicyPath), { recursive: true });
     await fs.writeFile(rlsPolicyPath, rlsPolicies);
-    console.log(`Generated RLS policies saved to ${rlsPolicyPath}`);
+    logger.info(`Generated RLS policies saved to ${rlsPolicyPath}`);
     // Similar to SQL schema, these would be applied to Supabase
   }
 
@@ -116,9 +117,9 @@ export class AssemblerAgent {
     for (const comp of generatedComponents) {
       const filePath = path.join(componentsDir, `${comp.name}.tsx`);
       await fs.writeFile(filePath, comp.code);
-      console.log(`Generated component ${comp.name} saved to ${filePath}`);
+      logger.info(`Generated component ${comp.name} saved to ${filePath}`);
     }
-    console.log(`Generated ${generatedComponents.length} UI components for ${appPath}`);
+    logger.info(`Generated ${generatedComponents.length} UI components for ${appPath}`);
   }
 
   async assemble(input: AssemblerInput): Promise<string> {
@@ -156,12 +157,12 @@ export class AssemblerAgent {
       generatedGrowthPlan: null, // This would ideally come from a previous step
       context: null, // Pass the current context if available
     });
-    console.log(`Generated QA Tests for ${newAppName}: ${generatedTests.testSummary}`);
+    logger.info(`Generated QA Tests for ${newAppName}: ${generatedTests.testSummary}`);
     // Save the generated tests to the new app directory
     const testFilePath = path.join(targetAppPath, 'e2e', 'saas.spec.ts');
     await fs.mkdir(path.dirname(testFilePath), { recursive: true });
     await fs.writeFile(testFilePath, generatedTests.playwrightTests);
-    console.log(`Playwright tests saved to ${testFilePath}`);
+    logger.info(`Playwright tests saved to ${testFilePath}`);
 
 
     return `New SaaS application '${newAppName}' assembled at ${targetAppPath}`;

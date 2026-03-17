@@ -16,6 +16,7 @@ import OpenAI from 'openai'
 import fs from 'fs/promises'
 import path from 'path'
 import { OpenCrawlAgent } from './opencrawl-agent'
+import { logger } from './utils/logger'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -205,12 +206,12 @@ export class RAGSystem {
         }
       }
     } catch (err) {
-      console.warn('[RAG] Could not read knowledge directory:', err)
+      logger.warn('[RAG] Could not read knowledge directory:', err)
       return
     }
 
     if (files.length === 0) {
-      console.log('[RAG] No knowledge files found.')
+      logger.info('[RAG] No knowledge files found.')
       return
     }
 
@@ -232,7 +233,7 @@ export class RAGSystem {
     }
 
     // Generate embeddings in batch
-    console.log(`[RAG] Generating embeddings for ${docs.length} knowledge documents...`)
+    logger.info(`[RAG] Generating embeddings for ${docs.length} knowledge documents...`)
     const texts = docs.map((d) => `${d.title}\n\n${d.content}`)
     const embeddings = await this.generateEmbeddingsBatch(texts)
 
@@ -241,7 +242,7 @@ export class RAGSystem {
       await this.storeDocument({ ...docs[i], embedding: embeddings[i] })
     }
 
-    console.log(`[RAG] Successfully loaded ${docs.length} knowledge documents with embeddings.`)
+    logger.info(`[RAG] Successfully loaded ${docs.length} knowledge documents with embeddings.`)
   }
 
   // ─── Semantic Search ────────────────────────────────────────────────────────
@@ -268,7 +269,7 @@ export class RAGSystem {
 
     if (error) {
       // Fallback: text search if pgvector RPC is not yet set up
-      console.warn('[RAG] pgvector RPC failed, falling back to text search:', error.message)
+      logger.warn('[RAG] pgvector RPC failed, falling back to text search:', error.message)
       return this.textSearchFallback(query, category, limit)
     }
 
@@ -337,7 +338,7 @@ export class RAGSystem {
       })
     }
 
-    console.log(`[RAG] Crawled and stored ${crawledResults.length} documents for: "${query}"`)
+    logger.info(`[RAG] Crawled and stored ${crawledResults.length} documents for: "${query}"`)
   }
 
   // ─── Stats ──────────────────────────────────────────────────────────────────

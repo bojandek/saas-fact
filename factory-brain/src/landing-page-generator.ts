@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
+import { logger } from './utils/logger'
 
 interface LandingPageContent {
   hero: {
@@ -144,7 +145,7 @@ Ensure the content is engaging, benefit-oriented, and suitable for a SaaS landin
       }
       return content;
     } catch (e) {
-      console.error("Failed to parse generated landing page content JSON:", contentJson, e);
+      logger.error("Failed to parse generated landing page content JSON:", contentJson, e);
       if (this.orchestrator) {
         await this.orchestrator.sendMessage({
           sender: 'Landing Page Generator',

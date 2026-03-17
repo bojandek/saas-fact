@@ -1,4 +1,5 @@
 /**
+import { logger } from './utils/logger'
  * Cost Tracker - AI API Usage & Cost Monitoring
  *
  * Intercepts all OpenAI and Anthropic API calls to track token usage
@@ -60,7 +61,7 @@ export interface CostSummary {
 export function calculateCost(model: string, usage: TokenUsage): number {
   const pricing = MODEL_PRICING[model]
   if (!pricing) {
-    console.warn(`[CostTracker] Unknown model: ${model}. Cost calculation skipped.`)
+    logger.warn(`[CostTracker] Unknown model: ${model}. Cost calculation skipped.`)
     return 0
   }
   const inputCost = (usage.inputTokens / 1_000_000) * pricing.inputPer1M
@@ -110,7 +111,7 @@ export class CostTracker {
     this.records.push(record)
 
     if (process.env.NODE_ENV !== 'test') {
-      console.log(
+      logger.info(
         `[CostTracker] ${params.agentName} | ${params.model} | ` +
         `${params.usage.totalTokens} tokens | $${costUSD.toFixed(6)}`
       )

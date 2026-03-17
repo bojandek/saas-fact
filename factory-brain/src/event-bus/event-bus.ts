@@ -4,6 +4,7 @@
  */
 
 import {
+import { logger } from '../utils/logger'
   SystemEvent,
   EventType,
   EventHandler,
@@ -40,7 +41,7 @@ export class EventBus {
   private processingTimes: number[] = [];
 
   constructor() {
-    console.log('🎯 Event Bus initialized');
+    logger.info('🎯 Event Bus initialized');
   }
 
   /**
@@ -61,7 +62,7 @@ export class EventBus {
       active: true,
     });
 
-    console.log(`✅ Handler registered for ${eventType}`);
+    logger.info(`✅ Handler registered for ${eventType}`);
     return subscriptionId;
   }
 
@@ -108,7 +109,7 @@ export class EventBus {
     // Update latency percentiles
     this.updateLatencyMetrics();
 
-    console.log(
+    logger.info(
       `📤 Published ${event.type} from ${event.source} (priority: ${event.priority})`
     );
   }
@@ -127,9 +128,9 @@ export class EventBus {
       try {
         await handler.handler(message.event);
         message.status = MessageStatus.Processed;
-        console.log(`✅ Processed ${eventType} message`);
+        logger.info(`✅ Processed ${eventType} message`);
       } catch (error) {
-        console.error(`❌ Handler error for ${eventType}:`, error);
+        logger.error(`❌ Handler error for ${eventType}:`, error);
 
         if (message.retries < handler.retryCount) {
           message.retries++;
@@ -159,7 +160,7 @@ export class EventBus {
    */
   private handleFailedMessage(message: StreamMessage): void {
     message.status = MessageStatus.DeadLetter;
-    console.error(`💀 Message sent to DLQ: ${message.id}`);
+    logger.error(`💀 Message sent to DLQ: ${message.id}`);
 
     // In production, ово bi bilo:
     // - Log to external monitoring
@@ -213,9 +214,9 @@ export class EventBus {
           // In real system, call app's webhook
           await this.deliverToApp(appId, event);
           delivered++;
-          console.log(`📢 Broadcast to ${appId}`);
+          logger.info(`📢 Broadcast to ${appId}`);
         } catch (error) {
-          console.error(`Failed to deliver to ${appId}:`, error);
+          logger.error(`Failed to deliver to ${appId}:`, error);
         }
       }
     }
@@ -277,7 +278,7 @@ export class EventBus {
     const subscription = this.subscriptions.get(subscriptionId);
     if (subscription) {
       subscription.active = false;
-      console.log(`Unsubscribed: ${subscriptionId}`);
+      logger.info(`Unsubscribed: ${subscriptionId}`);
       return true;
     }
     return false;
@@ -310,7 +311,7 @@ export class EventBus {
    */
   async processPendingMessages(): Promise<number> {
     const pending = this.messageQueue.filter((m) => m.status === MessageStatus.Pending);
-    console.log(`⏳ Processing ${pending.length} pending messages...`);
+    logger.info(`⏳ Processing ${pending.length} pending messages...`);
 
     for (const message of pending.slice(0, 100)) {
       // Process in batches

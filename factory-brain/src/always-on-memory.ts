@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { logger } from './utils/logger'
 
 interface MemoryState {
   id: string
@@ -185,7 +186,7 @@ export class AlwaysOnMemoryEngine {
 
       return step
     } catch (error) {
-      console.error('Reasoning error:', error)
+      logger.error('Reasoning error:', error)
       throw error
     }
   }
@@ -480,7 +481,7 @@ export class AlwaysOnMemoryEngine {
     // If confidence is low, diversify decision rules
     if (avgConfidenceTrend < 0.4 && this.memoryState.decision_rules.length < 20) {
       // Suggest new rules needed
-      console.log('Low confidence detected - considering new patterns')
+      logger.info('Low confidence detected - considering new patterns')
     }
 
     // Clean up low-effectiveness patterns
@@ -494,7 +495,7 @@ export class AlwaysOnMemoryEngine {
     )
 
     if (poorPerformingRules.length > 0) {
-      console.log(`Found ${poorPerformingRules.length} underperforming rules`)
+      logger.info(`Found ${poorPerformingRules.length} underperforming rules`)
       // Mark for review
     }
 
@@ -515,7 +516,7 @@ export class AlwaysOnMemoryEngine {
         onConflict: 'id',
       })
 
-    if (error) console.error('Failed to save memory state:', error)
+    if (error) logger.error('Failed to save memory state:', error)
   }
 
   /**

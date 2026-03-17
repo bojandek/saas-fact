@@ -1,4 +1,5 @@
 import neo4j from 'neo4j-driver'
+import { logger } from '../utils/logger'
 
 export interface Neo4jHAConfig {
   uri: string // neo4j+s://cluster-endpoint:7687
@@ -87,7 +88,7 @@ export class Neo4jHAClient {
         },
       }
     } catch (error) {
-      console.error('[Neo4j] Read query failed:', error)
+      logger.error('[Neo4j] Read query failed:', error)
       this.handleQueryError(error)
       throw error
     } finally {
@@ -121,7 +122,7 @@ export class Neo4jHAClient {
         },
       }
     } catch (error) {
-      console.error('[Neo4j] Write query failed:', error)
+      logger.error('[Neo4j] Write query failed:', error)
       this.handleQueryError(error)
       throw error
     } finally {
@@ -148,7 +149,7 @@ export class Neo4jHAClient {
 
       return result
     } catch (error) {
-      console.error(`[Neo4j] Transaction (${mode}) failed:`, error)
+      logger.error(`[Neo4j] Transaction (${mode}) failed:`, error)
       this.handleQueryError(error)
       throw error
     } finally {
@@ -191,7 +192,7 @@ export class Neo4jHAClient {
 
       return results
     } catch (error) {
-      console.error('[Neo4j] Batch query failed:', error)
+      logger.error('[Neo4j] Batch query failed:', error)
       this.handleQueryError(error)
       throw error
     } finally {
@@ -211,7 +212,7 @@ export class Neo4jHAClient {
       errorMessage.includes('timeout') ||
       errorMessage.includes('unavailable')
     ) {
-      console.warn('[Neo4j] Transient error, driver will retry:', error)
+      logger.warn('[Neo4j] Transient error, driver will retry:', error)
       return
     }
 
@@ -221,7 +222,7 @@ export class Neo4jHAClient {
       errorMessage.includes('cluster') ||
       errorMessage.includes('election')
     ) {
-      console.error('[Neo4j] Cluster error detected:', error)
+      logger.error('[Neo4j] Cluster error detected:', error)
       this.isHealthy = false
       return
     }
@@ -287,7 +288,7 @@ export class Neo4jHAClient {
         supportedFeatures: info.supportedFeatures || [],
       }
     } catch (error) {
-      console.error('[Neo4j] Failed to get cluster info:', error)
+      logger.error('[Neo4j] Failed to get cluster info:', error)
       throw error
     } finally {
       await session.close()
@@ -302,10 +303,10 @@ export class Neo4jHAClient {
       try {
         const health = await this.checkHealth()
         if (!health.healthy) {
-          console.warn('[Neo4j] Cluster health check failed:', health.details)
+          logger.warn('[Neo4j] Cluster health check failed:', health.details)
         }
       } catch (error) {
-        console.error('[Neo4j] Health check exception:', error)
+        logger.error('[Neo4j] Health check exception:', error)
       }
     }, 30000) // Check every 30 seconds
   }
@@ -346,7 +347,7 @@ export class Neo4jHAClient {
       try {
         return mode === 'READ' ? await this.read<T>(query, params) : await this.write<T>(query, params)
       } catch (error) {
-        console.warn(`[Neo4j] Attempt ${attempt}/${maxRetries} failed:`, error)
+        logger.warn(`[Neo4j] Attempt ${attempt}/${maxRetries} failed:`, error)
 
         if (attempt === maxRetries) {
           throw error
@@ -374,7 +375,7 @@ export class Neo4jHAClient {
 
     // Close driver
     await this.driver.close()
-    console.log('[Neo4j] Connection closed')
+    logger.info('[Neo4j] Connection closed')
   }
 }
 

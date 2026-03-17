@@ -4,6 +4,7 @@
  */
 
 import {
+import { logger } from '../utils/logger'
   KnowledgeEntity,
   EntityType,
   GraphRelationship,
@@ -30,7 +31,7 @@ export class KnowledgeGraphEngine {
    */
   addEntity(entity: KnowledgeEntity): void {
     this.nodes.set(entity.id, entity);
-    console.log(`✅ Added ${entity.type} entity: ${entity.label}`);
+    logger.info(`✅ Added ${entity.type} entity: ${entity.label}`);
   }
 
   /**
@@ -38,7 +39,7 @@ export class KnowledgeGraphEngine {
    */
   addRelationship(relationship: GraphRelationship): void {
     this.relationships.set(relationship.id, relationship);
-    console.log(
+    logger.info(
       `🔗 Linked ${relationship.sourceId} -[${relationship.type}]-> ${relationship.targetId}`
     );
   }
@@ -48,7 +49,7 @@ export class KnowledgeGraphEngine {
    */
   recordEvent(event: KnowledgeEvent): void {
     this.eventLog.push(event);
-    console.log(`📝 Event recorded: ${event.type} on ${event.entityType} from ${event.sourceApp}`);
+    logger.info(`📝 Event recorded: ${event.type} on ${event.entityType} from ${event.sourceApp}`);
 
     // Automatically enrich i sync
     this.enrichAndSync(event);
@@ -84,7 +85,7 @@ export class KnowledgeGraphEngine {
     };
 
     this.syncQueue.push(syncMessage);
-    console.log(`🔄 Queued sync to ${targetApps.length} applications`);
+    logger.info(`🔄 Queued sync to ${targetApps.length} applications`);
   }
 
   /**
@@ -286,7 +287,7 @@ export class KnowledgeGraphEngine {
               status: 'Delivered',
             });
 
-            console.log(`📦 Delivered knowledge to ${target.appId}`);
+            logger.info(`📦 Delivered knowledge to ${target.appId}`);
           } catch (error) {
             message.deliveryLog.push({
               appId: target.appId,
@@ -295,7 +296,7 @@ export class KnowledgeGraphEngine {
               reason: String(error),
             });
 
-            console.error(`❌ Failed to deliver to ${target.appId}`);
+            logger.error(`❌ Failed to deliver to ${target.appId}`);
           }
         }
 

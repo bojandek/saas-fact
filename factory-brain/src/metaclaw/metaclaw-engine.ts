@@ -13,6 +13,7 @@ import {
   ImprovementSuggestion,
 } from './types';
 import { simulateFitness, SimulationContext } from './simulation-environment';
+import { logger } from '../utils/logger'
 
 export class MetaClawEngine {
   private population: EvolutionPopulation;
@@ -42,7 +43,7 @@ export class MetaClawEngine {
    * Izvršava kompletan evolution cycle (24h)
    */
   async evolve(): Promise<EvolutionCycleReport> {
-    console.log(`🧬 Starting Evolution Cycle ${this.generation + 1}...`);
+    logger.info(`🧬 Starting Evolution Cycle ${this.generation + 1}...`);
 
     // 1. Evaluate fitness za sve genome
     await this.evaluatePopulation();

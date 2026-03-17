@@ -8,6 +8,7 @@ import { AgentHubCore, Artifact, ArtifactType, InitWorkspaceRequest } from '../b
 import { ArchitectAgent, CodeReviewAgent, DesignAgent, ContentAgent, DataAgent } from './agents'
 import { MemorySystem } from './memory'
 import { RAGSystem } from './rag'
+import { logger } from './utils/logger'
 
 export interface AgentHubIntegrationConfig {
   supabaseUrl: string
@@ -54,9 +55,9 @@ export class FactoryBrainWithAgentHub {
     const workspace = await this.agenthub.initWorkspace(request)
     this.workspaceId = workspace.id
 
-    console.log(`✓ AgentHub workspace initialized for ${projectId}`)
-    console.log(`  Workspace ID: ${workspace.id}`)
-    console.log(`  Team: ${workspace.agents.map((a) => a.name).join(', ')}`)
+    logger.info(`✓ AgentHub workspace initialized for ${projectId}`)
+    logger.info(`  Workspace ID: ${workspace.id}`)
+    logger.info(`  Team: ${workspace.agents.map((a) => a.name).join(', ')}`)
 
     return workspace.id
   }
@@ -70,7 +71,7 @@ export class FactoryBrainWithAgentHub {
   }> {
     if (!this.workspaceId) throw new Error('Workspace not initialized')
 
-    console.log('\n🏗️ Designing architecture with agent collaboration...\n')
+    logger.info('\n🏗️ Designing architecture with agent collaboration...\n')
 
     // Architect proposes architecture
     const architectureOutput = await this.architectAgent.designArchitecture(requirements)
@@ -84,7 +85,7 @@ export class FactoryBrainWithAgentHub {
       description: requirements,
     })
 
-    console.log(`✓ Architect proposed architecture (${architectProposal.id})`)
+    logger.info(`✓ Architect proposed architecture (${architectProposal.id})`)
 
     // Code reviewer checks architecture for implementation feasibility
     const reviewOutput = await this.codeReviewAgent.review(architectureOutput, 'architecture')
@@ -94,7 +95,7 @@ export class FactoryBrainWithAgentHub {
       artifactId: architectProposal.id,
     })
 
-    console.log(`✓ Architecture merged after code review`)
+    logger.info(`✓ Architecture merged after code review`)
 
     return {
       architecture: architectureOutput,
@@ -111,7 +112,7 @@ export class FactoryBrainWithAgentHub {
   }> {
     if (!this.workspaceId) throw new Error('Workspace not initialized')
 
-    console.log('\n💻 Generating project scaffold with team collaboration...\n')
+    logger.info('\n💻 Generating project scaffold with team collaboration...\n')
 
     // Architect designs scaffold structure
     const scaffoldOutput = await this.architectAgent.generateScaffold(saasType, techStack)
@@ -125,7 +126,7 @@ export class FactoryBrainWithAgentHub {
       description: `${saasType} using ${techStack.join(', ')}`,
     })
 
-    console.log(`✓ Architect proposed scaffold`)
+    logger.info(`✓ Architect proposed scaffold`)
 
     // Code reviewer checks for security and best practices
     const reviewOutput = await this.codeReviewAgent.review(
@@ -138,7 +139,7 @@ export class FactoryBrainWithAgentHub {
       artifactId: scaffoldProposal.id,
     })
 
-    console.log(`✓ Scaffold approved and merged`)
+    logger.info(`✓ Scaffold approved and merged`)
 
     // Store in memory for future reference
     await this.memory.recordDecision('scaffold-generation', {
@@ -167,7 +168,7 @@ export class FactoryBrainWithAgentHub {
   }> {
     if (!this.workspaceId) throw new Error('Workspace not initialized')
 
-    console.log('\n📝 Generating marketing materials with team collaboration...\n')
+    logger.info('\n📝 Generating marketing materials with team collaboration...\n')
 
     const artifacts: Artifact[] = []
 
@@ -182,7 +183,7 @@ export class FactoryBrainWithAgentHub {
       title: `Marketing Copy: ${productName}`,
     })
 
-    console.log(`✓ Marketer proposed copy`)
+    logger.info(`✓ Marketer proposed copy`)
     artifacts.push(copyProposal)
 
     // Designer recommends visual design approach
@@ -196,14 +197,14 @@ export class FactoryBrainWithAgentHub {
       title: `Design System: ${productName}`,
     })
 
-    console.log(`✓ Designer proposed visual design`)
+    logger.info(`✓ Designer proposed visual design`)
     artifacts.push(designProposal)
 
     // Merge both
     const mergedCopy = await this.agenthub.merge(this.workspaceId, { artifactId: copyProposal.id })
     const mergedDesign = await this.agenthub.merge(this.workspaceId, { artifactId: designProposal.id })
 
-    console.log(`✓ Marketing artifacts merged and approved`)
+    logger.info(`✓ Marketing artifacts merged and approved`)
 
     return {
       copy: copyOutput,
@@ -226,7 +227,7 @@ export class FactoryBrainWithAgentHub {
   }> {
     if (!this.workspaceId) throw new Error('Workspace not initialized')
 
-    console.log('\n📊 Analyzing data with agent collaboration...\n')
+    logger.info('\n📊 Analyzing data with agent collaboration...\n')
 
     // Data agent generates SQL
     const sqlQuery = await this.dataAgent.generateSQLQuery(tableName, filters, metrics)
@@ -239,14 +240,14 @@ export class FactoryBrainWithAgentHub {
       title: `SQL Query: ${tableName}`,
     })
 
-    console.log(`✓ Data agent proposed query`)
+    logger.info(`✓ Data agent proposed query`)
 
     // Code reviewer checks SQL for performance and security
     const reviewOutput = await this.codeReviewAgent.review(sqlQuery, 'SQL injection, performance, indexes')
 
     const merged = await this.agenthub.merge(this.workspaceId, { artifactId: queryProposal.id })
 
-    console.log(`✓ Query approved and merged`)
+    logger.info(`✓ Query approved and merged`)
 
     return {
       query: sqlQuery,
@@ -304,7 +305,7 @@ export class FactoryBrainWithAgentHub {
     techStack: string[]
     targetAudience: string
   }): Promise<void> {
-    console.log(`\n🏭 Starting collaborative project generation: ${projectSpec.name}\n`)
+    logger.info(`\n🏭 Starting collaborative project generation: ${projectSpec.name}\n`)
 
     // Initialize workspace
     await this.initializeWorkspace(projectSpec.projectId)
@@ -325,10 +326,10 @@ export class FactoryBrainWithAgentHub {
     // Get final stats
     const history = await this.getWorkspaceHistory()
 
-    console.log(`\n✨ Project generation complete!\n`)
-    console.log(`Total artifacts created: ${history.totalArtifacts}`)
-    console.log(`Artifacts by type:`, history.artifactsByType)
-    console.log(
+    logger.info(`\n✨ Project generation complete!\n`)
+    logger.info(`Total artifacts created: ${history.totalArtifacts}`)
+    logger.info(`Artifacts by type:`, history.artifactsByType)
+    logger.info(
       `\n📚 Learned patterns stored: ${history.learnedPatterns.length}`,
       '\nThese will improve future projects!'
     )

@@ -4,6 +4,7 @@
  */
 
 import { AlwaysOnMemoryEngine, MemoryState, ReasoningStep, Pattern } from './always-on-memory'
+import { logger } from './utils/logger'
 
 /**
  * Global memory instance (per user session)
@@ -23,17 +24,17 @@ let globalMemory: AlwaysOnMemoryEngine | null = null
  */
 export async function initializeMemory(sessionId: string): Promise<AlwaysOnMemoryEngine> {
   if (globalMemory) {
-    console.log('Memory already initialized for session:', sessionId)
+    logger.info('Memory already initialized for session:', sessionId)
     return globalMemory
   }
 
-  console.log('🧠 Initializing Always-On Memory for session:', sessionId)
+  logger.info('🧠 Initializing Always-On Memory for session:', sessionId)
   globalMemory = new AlwaysOnMemoryEngine(sessionId)
   await globalMemory.initialize()
 
   // Log memory restoration
   const insights = await globalMemory.getInsights()
-  console.log('📊 Memory restored with:', {
+  logger.info('📊 Memory restored with:', {
     previous_interactions: insights.total_interactions,
     average_confidence: insights.average_confidence,
     learning_progress: `${Math.round(insights.learning_progress)}%`,
@@ -69,8 +70,8 @@ export function getMemory(): AlwaysOnMemoryEngine {
  *   'Should we use microservices or monolith?',
  *   { scale: '1M users', budget: 'moderate', team_size: 5 }
  * )
- * console.log(decision.recommendation)
- * console.log(decision.confidence)
+ * logger.info(decision.recommendation)
+ * logger.info(decision.confidence)
  */
 export async function askBrain(
   question: string,
@@ -117,7 +118,7 @@ export async function feedbackToBrain(
   const memory = getMemory()
   await memory.recordDecision(decisionId, action, feedback, notes)
 
-  console.log(`📝 Brain learned: ${action} was ${feedback}`)
+  logger.info(`📝 Brain learned: ${action} was ${feedback}`)
 }
 
 /**
@@ -141,7 +142,7 @@ export async function teachBrain(
   const memory = getMemory()
   await memory.learnPattern(patternName, description, triggers, recommendation)
 
-  console.log(`🎓 Brain learned new pattern: ${patternName}`)
+  logger.info(`🎓 Brain learned new pattern: ${patternName}`)
 }
 
 /**
@@ -165,7 +166,7 @@ export async function updatePatternEffectiveness(
  * 
  * @example
  * const insights = await getBrainStatus()
- * console.log(`Brain is ${insights.learning_progress}% trained`)
+ * logger.info(`Brain is ${insights.learning_progress}% trained`)
  */
 export async function getBrainStatus(): Promise<{
   total_interactions: number
@@ -191,7 +192,7 @@ export function updateBrainContext(key: string, value: any): void {
   const memory = getMemory()
   memory.updateContext(key, value)
 
-  console.log(`🧠 Context updated: ${key} = ${value}`)
+  logger.info(`🧠 Context updated: ${key} = ${value}`)
 }
 
 /**
@@ -207,7 +208,7 @@ export async function cleanupMemory(): Promise<void> {
   if (globalMemory) {
     await globalMemory.cleanup()
     globalMemory = null
-    console.log('🧠 Memory engine cleaned up')
+    logger.info('🧠 Memory engine cleaned up')
   }
 }
 

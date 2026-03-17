@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from './utils/logger'
 
 interface DeploymentConfig {
   appName: string;
@@ -69,7 +70,7 @@ export class CoolifyDeployAgent {
         url: deployResponse.data.url,
       };
     } catch (error: any) {
-      console.error('Coolify deployment error:', error);
+      logger.error('Coolify deployment error:', error);
       return {
         deploymentId: '',
         status: 'failed',
@@ -101,7 +102,7 @@ export class CoolifyDeployAgent {
         url: response.data.url,
       };
     } catch (error: any) {
-      console.error('Coolify status check error:', error);
+      logger.error('Coolify status check error:', error);
       return {
         deploymentId,
         status: 'failed',
@@ -130,7 +131,7 @@ export class CoolifyDeployAgent {
         }
       );
     } catch (error: any) {
-      console.error('Coolify environment configuration error:', error);
+      logger.error('Coolify environment configuration error:', error);
       throw new Error(`Failed to configure environment: ${error.message}`);
     }
   }

@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
+import { logger } from './utils/logger'
 
 interface GrowthPlan {
   seo: {
@@ -123,7 +124,7 @@ Ensure the content is engaging, relevant, and optimized for growth.`;
       }
       return plan;
     } catch (e) {
-      console.error("Failed to parse generated growth plan JSON:", planJson, e);
+      logger.error("Failed to parse generated growth plan JSON:", planJson, e);
       if (this.orchestrator) {
         await this.orchestrator.sendMessage({
           sender: 'AI Growth Hacker Agent',
