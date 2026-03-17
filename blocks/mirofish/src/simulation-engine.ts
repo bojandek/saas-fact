@@ -12,6 +12,9 @@ import {
 } from "./types";
 import { AgentSwarmManager } from "./swarm";
 import { BehaviorPredictionModel } from "./prediction-model";
+import { generatePersonas, personaToAgentConfig, type Persona } from "./persona-generator";
+import { TemporalMemoryStore, type RoundUpdate } from "./temporal-memory";
+import { PostSimulationReportAgent, type SimulationReport, type SimulationSummary } from "./report-agent";
 
 /**
  * Market Simulation Engine - Orchestrates entire simulation
@@ -27,6 +30,11 @@ export class MarketSimulationEngine {
   private events: SimulationEvent[] = [];
   private trends: MarketTrend[] = [];
   private cohortAnalyses: Map<string, CohortAnalysis> = new Map();
+  // MiroFish enhancements
+  private personas: Persona[] = [];
+  private memoryStore: TemporalMemoryStore | null = null;
+  private reportAgent: PostSimulationReportAgent | null = null;
+  private simulationReport: SimulationReport | null = null;
 
   constructor(config: SimulationConfig) {
     // Validate config
@@ -107,6 +115,14 @@ export class MarketSimulationEngine {
         this.getSpecializations()
       );
 
+      // Step 1b: Generate personas if saasDescription is provided
+      if ((this.config as Record<string, unknown>).saasDescription) {
+        await this.generatePersonasForSimulation();
+      }
+
+      // Step 1c: Initialize temporal memory store
+      this.memoryStore = new TemporalMemoryStore(this.state.simulationId);
+
       // Step 2: Generate simulated users
       await this.generateSimulatedUsers();
 
@@ -129,6 +145,11 @@ export class MarketSimulationEngine {
 
       // Step 5: Generate trends and insights
       await this.generateTrends();
+
+      // Step 6: Generate post-simulation report
+      if (this.memoryStore) {
+        await this.generateSimulationReport();
+      }
 
       this.state.status = "completed";
       this.state.endTime = new Date();
@@ -155,6 +176,76 @@ export class MarketSimulationEngine {
       );
       this.logger.error({ error, simulationId: this.state.simulationId }, "Simulation failed");
       throw error;
+    }
+  }
+
+  /**
+   * Generate personas from SaaS description (MiroFish Enhancement #1)
+   */
+  private async generatePersonasForSimulation(): Promise<void> {
+    const config = this.config as Record<string, unknown>;
+    const saasDescription = config.saasDescription as string;
+    const personaCount = Math.min(this.config.totalUsers, 20); // Generate up to 20 rich personas
+
+    this.logger.info({ saasDescription, personaCount }, 'Generating personas for simulation');
+
+    try {
+      const result = await generatePersonas({
+        saasDescription,
+        targetMarket: (config.targetMarket as string) ?? 'B2B SaaS users',
+        pricePoint: (config.pricePoint as string) ?? 'mid-market ($50-200/month)',
+        count: personaCount,
+        distributionStrategy: 'realistic',
+      });
+
+      this.personas = result.personas;
+      this.logger.info(
+        { generated: this.personas.length, dominant: result.dominant_segment },
+        'Personas generated'
+      );
+    } catch (err) {
+      this.logger.warn({ err }, 'Persona generation failed, falling back to generic users');
+    }
+  }
+
+  /**
+   * Generate post-simulation report (MiroFish Enhancement #3)
+   */
+  private async generateSimulationReport(): Promise<void> {
+    if (!this.memoryStore) return;
+
+    this.reportAgent = new PostSimulationReportAgent();
+    const metrics = this.memoryStore.getAggregatedMetrics();
+    const config = this.config as Record<string, unknown>;
+
+    const summary: SimulationSummary = {
+      simulation_id: this.state.simulationId,
+      saas_description: (config.saasDescription as string) ?? 'SaaS Product',
+      total_agents: this.config.totalAgents,
+      simulation_rounds: Math.ceil(this.config.timeHorizonDays / 7), // weekly rounds
+      time_horizon_days: this.config.timeHorizonDays,
+      final_metrics: {
+        avg_engagement: metrics.avg_engagement || this.state.metrics.avgEngagementScore,
+        avg_churn_risk: metrics.avg_churn_risk || this.state.metrics.churnRate,
+        avg_satisfaction: metrics.avg_satisfaction || 0.65,
+        total_ltv: metrics.total_ltv || this.state.metrics.predictedARR / 12,
+        high_churn_count: metrics.high_churn_count || this.state.riskProfile.highRiskUsers,
+        churned_count: metrics.churned_count || this.state.metrics.totalChurnPredicted,
+        top_features: metrics.top_features,
+      },
+      personas: this.personas.length > 0 ? this.personas : undefined,
+    };
+
+    this.logger.info({ simulation_id: summary.simulation_id }, 'Generating post-simulation report');
+
+    try {
+      this.simulationReport = await this.reportAgent.generateReport(summary, this.memoryStore);
+      this.logger.info(
+        { report_id: this.simulationReport.report_id, confidence: this.simulationReport.confidence_score },
+        'Post-simulation report generated'
+      );
+    } catch (err) {
+      this.logger.warn({ err }, 'Report generation failed');
     }
   }
 
@@ -633,6 +724,35 @@ export class MarketSimulationEngine {
     } catch (error) {
       this.logger.error({ error }, "Failed to persist results");
     }
+  }
+
+  /**
+   * Get generated personas (MiroFish Enhancement #1)
+   */
+  getPersonas(): Persona[] {
+    return this.personas;
+  }
+
+  /**
+   * Get temporal memory store (MiroFish Enhancement #2)
+   */
+  getMemoryStore(): TemporalMemoryStore | null {
+    return this.memoryStore;
+  }
+
+  /**
+   * Get post-simulation report (MiroFish Enhancement #3)
+   */
+  getReport(): SimulationReport | null {
+    return this.simulationReport;
+  }
+
+  /**
+   * Get report as Markdown string
+   */
+  getReportMarkdown(): string | null {
+    if (!this.simulationReport || !this.reportAgent) return null;
+    return this.reportAgent.formatAsMarkdown(this.simulationReport);
   }
 
   /**
