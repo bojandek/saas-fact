@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { RAGSystem } from './rag';
 
 interface GrowthPlan {
   seo: {
@@ -19,18 +20,30 @@ interface GrowthPlan {
 
 export class GrowthHackerAgent {
   private openai: OpenAI;
+  private ragSystem: RAGSystem;
 
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+    this.ragSystem = new RAGSystem();
   }
 
   async generateGrowthPlan(saasDescription: string): Promise<GrowthPlan> {
-    const prompt = `Generate a comprehensive growth plan for a SaaS application based on the following description. The plan should include SEO strategy, social media posts, and an email campaign.
+    // Retrieve relevant growth and retention principles from the knowledge base
+    const growthPrinciples = await this.ragSystem.search(
+      "SaaS Growth & Retention Best Practices",
+      2
+    );
+    const growthContext = growthPrinciples
+      .map((doc) => doc.content)
+      .join("\n\n");
+
+    const prompt = `Generate a comprehensive growth plan for a SaaS application based on the following description. The plan should include SEO strategy, social media posts, and an email campaign. Adhere to the provided growth and retention best practices to ensure sustainable success.
 
 Description: ${saasDescription}
 
+Growth & Retention Context:\n${growthContext}\n
 Provide the output as a JSON object with the following structure:
 {
   "seo": {

@@ -57,7 +57,7 @@ interface GrowthPlan {
   }>;
 }
 
-type Step = 'description' | 'theme' | 'blueprint' | 'landing' | 'growth' | 'deploy' | 'complete';
+type Step = 'description' | 'theme' | 'blueprint' | 'landing' | 'growth' | 'compliance' | 'deploy' | 'complete';
 
 export default function OrchestratorPage() {
   const [currentStep, setCurrentStep] = useState<Step>('description');
@@ -67,6 +67,7 @@ export default function OrchestratorPage() {
   const [blueprint, setBlueprint] = useState<ArchitectBlueprint | null>(null);
   const [landingPage, setLandingPage] = useState<LandingPageContent | null>(null);
   const [growthPlan, setGrowthPlan] = useState<GrowthPlan | null>(null);
+  const [complianceChecks, setComplianceChecks] = useState<ComplianceCheckResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deploymentResult, setDeploymentResult] = useState<string | null>(null);
@@ -147,7 +148,34 @@ export default function OrchestratorPage() {
       if (!response.ok) throw new Error('Failed to generate growth plan');
       const data = await response.json();
       setGrowthPlan(data);
-      setCurrentStep('deploy');
+      setCurrentStep('compliance');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRunComplianceChecks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/check-compliance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          saasDescription,
+          generatedTheme: theme,
+          generatedBlueprint: blueprint,
+          generatedLandingPage: landingPage,
+          generatedGrowthPlan: growthPlan,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to run compliance checks");
+      const data = await response.json();
+      setComplianceChecks(data);
+      setCurrentStep("deploy");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -194,15 +222,15 @@ export default function OrchestratorPage() {
 
       {/* Step Indicator */}
       <div className="flex justify-between mb-8 overflow-x-auto">
-        {(['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'] as Step[]).map((step, idx) => (
+        {(["description", "theme", "blueprint", "landing", "growth", "compliance", "deploy", "complete"] as Step[]).map((step, idx) => (
           <div key={step} className="flex items-center flex-shrink-0">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                 currentStep === step
                   ? 'bg-blue-500 text-white'
-                  : ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy'].includes(step) && 
-                    ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'].indexOf(step) <= 
-                    ['description', 'theme', 'blueprint', 'landing', 'growth', 'deploy', 'complete'].indexOf(currentStep)
+                  : ["description", "theme", "blueprint", "landing", "growth", "compliance", "deploy"].includes(step) && 
+                    ["description", "theme", "blueprint", "landing", "growth", "compliance", "deploy", "complete"].indexOf(step) <= 
+                    ["description", "theme", "blueprint", "landing", "growth", "compliance", "deploy", "complete"].indexOf(currentStep)
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-300 text-gray-600'
               }`}
@@ -210,7 +238,7 @@ export default function OrchestratorPage() {
               {idx + 1}
             </div>
             <span className="ml-2 text-xs font-medium whitespace-nowrap">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
-            {idx < 6 && <div className="w-4 h-1 bg-gray-300 mx-1 flex-shrink-0"></div>}
+            {idx < 7 && <div className="w-4 h-1 bg-gray-300 mx-1 flex-shrink-0"></div>}
           </div>
         ))}
       </div>
@@ -293,6 +321,34 @@ export default function OrchestratorPage() {
             <p><strong>SEO Meta Title:</strong> {growthPlan.seo.metaTitle}</p>
             <p><strong>Social Posts:</strong> {growthPlan.socialMediaPosts.length} posts ready</p>
             <p><strong>Email Sequences:</strong> {growthPlan.emailCampaign.length} emails ready</p>
+            <Button onClick={handleRunComplianceChecks} disabled={loading} className="mt-4">
+              {loading ? 'Running Checks...' : 'Run Compliance Checks'}
+            </Button>
+          </>
+        )}
+
+        {currentStep === 'compliance' && complianceChecks && (
+          <>
+            <h2 className="text-2xl font-semibold mb-4">Step 6: Compliance & Best Practice Checks</h2>
+            <div className="space-y-4">
+              {complianceChecks.map((check, index) => (
+                <div key={index} className="p-3 border rounded-md">
+                  <p className="font-medium">Category: {check.category}</p>
+                  <p>Status: <span className={`font-bold ${check.status === 'critical' ? 'text-red-500' : check.status === 'warning' ? 'text-yellow-500' : check.status === 'suggestion' ? 'text-blue-500' : 'text-green-500'}`}>{check.status.toUpperCase()}</span></p>
+                  <p>Message: {check.message}</p>
+                  {check.recommendations && check.recommendations.length > 0 && (
+                    <div>
+                      <p className="font-medium mt-2">Recommendations:</p>
+                      <ul className="list-disc list-inside ml-4">
+                        {check.recommendations.map((rec, recIdx) => (
+                          <li key={recIdx}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
             <Button onClick={handleDeploy} disabled={loading} className="mt-4">
               {loading ? 'Deploying...' : 'Deploy to Coolify (Go Live)'}
             </Button>

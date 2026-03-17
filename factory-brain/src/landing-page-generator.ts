@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { RAGSystem } from './rag';
 
 interface LandingPageContent {
   hero: {
@@ -26,18 +27,30 @@ interface LandingPageContent {
 
 export class LandingPageGenerator {
   private openai: OpenAI;
+  private ragSystem: RAGSystem;
 
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+    this.ragSystem = new RAGSystem();
   }
 
   async generateContent(saasDescription: string): Promise<LandingPageContent> {
-    const prompt = `Generate compelling and structured content for a landing page for a SaaS application based on the following description:
+    // Retrieve relevant product-market fit and strategy principles from the knowledge base
+    const strategyPrinciples = await this.ragSystem.search(
+      "SaaS Product-Market Fit & Strategy Best Practices",
+      2
+    );
+    const strategyContext = strategyPrinciples
+      .map((doc) => doc.content)
+      .join("\n\n");
+
+    const prompt = `Generate compelling and structured content for a landing page for a SaaS application based on the following description. Adhere to the provided product-market fit and strategy best practices to ensure high conversion and value proposition.
 
 Description: ${saasDescription}
 
+Product-Market Fit & Strategy Context:\n${strategyContext}\n
 Include the following sections:
 1.  **Hero Section**: A catchy headline, a concise subheadline, and a strong call to action.
 2.  **Features Section**: 3-4 key features, each with a title and a brief description.
