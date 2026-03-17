@@ -1,9 +1,11 @@
 /**
  * No-Code Export API Route
  * Converts a SaaS Factory blueprint to a target No-Code platform format.
+ * Protected: requires authentication.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { withAuth, withValidation } from '../../../lib/api-helpers'
 
 const RequestSchema = z.object({
   platform: z.enum(['flutterflow', 'bubble', 'zapier', 'retool']),
@@ -18,25 +20,10 @@ const RequestSchema = z.object({
   }),
 })
 
-export async function POST(request: NextRequest) {
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
+export const POST = withAuth(
+  withValidation(RequestSchema, async (_req: NextRequest, { body }) => {
+    const { platform, blueprint } = body
 
-  const parsed = RequestSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request', details: parsed.error.flatten() },
-      { status: 422 }
-    )
-  }
-
-  const { platform, blueprint } = parsed.data
-
-  try {
     // Dynamic import to avoid bundling server-side modules in edge runtime
     const { noCodeAdapterFactory } = await import(
       '../../../factory-brain-types'
@@ -51,8 +38,5 @@ export async function POST(request: NextRequest) {
       instructions: output.instructions,
       limitations: output.limitations,
     })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Export failed'
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+  })
+)

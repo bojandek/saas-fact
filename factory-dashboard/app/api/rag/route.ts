@@ -1,20 +1,11 @@
-import { NextResponse } from 'next/server';
-import { RAGSystem } from '../../../../factory-brain/src/rag';
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth, withValidation, RagQuerySchema } from '../../../lib/api-helpers'
+import { RAGSystem } from '../../../../factory-brain/src/rag'
 
-export async function POST(request: Request) {
-  try {
-    const { query } = await request.json();
-
-    if (!query) {
-      return NextResponse.json({ error: 'Query parameter is missing' }, { status: 400 });
-    }
-
-    const ragSystem = new RAGSystem();
-    const results = await ragSystem.search(query);
-
-    return NextResponse.json(results);
-  } catch (error) {
-    console.error('RAG API error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
+export const POST = withAuth(
+  withValidation(RagQuerySchema, async (_req: NextRequest, { body }) => {
+    const ragSystem = new RAGSystem()
+    const results = await ragSystem.search(body.query, body.category, body.limit)
+    return NextResponse.json(results)
+  })
+)

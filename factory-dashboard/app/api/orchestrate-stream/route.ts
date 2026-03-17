@@ -97,12 +97,25 @@ export async function GET(request: NextRequest) {
   const limited = applyRateLimit(request, { limit: 5, window: 60 })
   if (limited) return limited
 
+  // Auth check: require x-user-id header injected by middleware
+  const userId = request.headers.get('x-user-id')
+  if (!userId) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized', message: 'Authentication required' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const saasDescription = searchParams.get('description')
   const appName = searchParams.get('appName') || 'my-saas'
 
-  if (!saasDescription) {
-    return new Response('Missing description parameter', { status: 400 })
+  if (!saasDescription || saasDescription.length < 10) {
+    return new Response('Missing or too short description parameter (min 10 chars)', { status: 400 })
+  }
+
+  if (saasDescription.length > 2000) {
+    return new Response('Description too long (max 2000 chars)', { status: 400 })
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${process.env.PORT || 3001}`

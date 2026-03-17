@@ -1,21 +1,26 @@
-import { NextResponse } from 'next/server';
-import { applyRateLimit } from '../../../lib/rate-limit';
-import { QaAgent } from '../../../../factory-brain/src/qa-agent';
-import { AgentContext } from '../../../../factory-brain/src/war-room-orchestrator';
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { applyRateLimit } from '../../../lib/rate-limit'
+import { withAuth, withValidation } from '../../../lib/api-helpers'
+import { QaAgent } from '../../../../factory-brain/src/qa-agent'
 
-export async function POST(req: Request) {
-  // Rate limit: 10 AI generation requests per minute per IP
-  const limited = applyRateLimit(req, { limit: 10, window: 60 });
-  if (limited) return limited;
+const QaTestsInputSchema = z.object({
+  saasDescription: z.string().min(10).max(2000),
+  appName: z.string().min(2).max(100),
+  generatedTheme: z.record(z.unknown()),
+  generatedBlueprint: z.record(z.unknown()),
+  generatedLandingPage: z.record(z.unknown()),
+  generatedGrowthPlan: z.record(z.unknown()),
+  context: z.record(z.unknown()).optional(),
+})
 
-  try {
-    const { saasDescription, appName, generatedTheme, generatedBlueprint, generatedLandingPage, generatedGrowthPlan, context } = await req.json();
+export const POST = withAuth(
+  withValidation(QaTestsInputSchema, async (req: NextRequest, { body }) => {
+    const limited = applyRateLimit(req, { limit: 10, window: 60 })
+    if (limited) return limited
 
-    if (!saasDescription || !appName || !generatedTheme || !generatedBlueprint || !generatedLandingPage || !generatedGrowthPlan) {
-      return NextResponse.json({ error: 'Missing required fields for QA test generation' }, { status: 400 });
-    }
-
-    const qaAgent = new QaAgent(context);
+    const { saasDescription, appName, generatedTheme, generatedBlueprint, generatedLandingPage, generatedGrowthPlan, context } = body
+    const qaAgent = new QaAgent(context)
     const { tests, messages, context: newContext } = await qaAgent.generateTests({
       saasDescription,
       appName,
@@ -24,11 +29,7 @@ export async function POST(req: Request) {
       generatedLandingPage,
       generatedGrowthPlan,
       context,
-    });
-
-    return NextResponse.json({ tests, messages, context: newContext });
-  } catch (error) {
-    console.error('Error generating QA tests:', error);
-    return NextResponse.json({ error: 'Failed to generate QA tests' }, { status: 500 });
-  }
-}
+    })
+    return NextResponse.json({ tests, messages, context: newContext })
+  })
+)

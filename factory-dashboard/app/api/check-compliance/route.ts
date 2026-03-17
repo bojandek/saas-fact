@@ -1,31 +1,31 @@
-import { NextResponse } from 'next/server';
-import { applyRateLimit } from '../../../lib/rate-limit';
-import { ComplianceCheckerAgent } from '../../../../factory-brain/src/compliance-checker-agent';
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { applyRateLimit } from '../../../lib/rate-limit'
+import { withAuth, withValidation } from '../../../lib/api-helpers'
+import { ComplianceCheckerAgent } from '../../../../factory-brain/src/compliance-checker-agent'
 
-export async function POST(request: Request) {
-  // Rate limit: 10 AI generation requests per minute per IP
-  const limited = applyRateLimit(request, { limit: 10, window: 60 });
-  if (limited) return limited;
+const ComplianceInputSchema = z.object({
+  saasDescription: z.string().min(10).max(2000),
+  generatedTheme: z.record(z.unknown()).optional(),
+  generatedBlueprint: z.record(z.unknown()).optional(),
+  generatedLandingPage: z.record(z.unknown()).optional(),
+  generatedGrowthPlan: z.record(z.unknown()).optional(),
+})
 
-  try {
-    const { saasDescription, generatedTheme, generatedBlueprint, generatedLandingPage, generatedGrowthPlan } = await request.json();
+export const POST = withAuth(
+  withValidation(ComplianceInputSchema, async (req: NextRequest, { body }) => {
+    const limited = applyRateLimit(req, { limit: 10, window: 60 })
+    if (limited) return limited
 
-    if (!saasDescription) {
-      return NextResponse.json({ error: 'SaaS description is missing' }, { status: 400 });
-    }
-
-    const complianceCheckerAgent = new ComplianceCheckerAgent();
+    const { saasDescription, generatedTheme, generatedBlueprint, generatedLandingPage, generatedGrowthPlan } = body
+    const complianceCheckerAgent = new ComplianceCheckerAgent()
     const results = await complianceCheckerAgent.checkCompliance(
       saasDescription,
       generatedTheme,
       generatedBlueprint,
       generatedLandingPage,
       generatedGrowthPlan
-    );
-
-    return NextResponse.json(results);
-  } catch (error) {
-    console.error('Compliance Check API error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
+    )
+    return NextResponse.json(results)
+  })
+)
