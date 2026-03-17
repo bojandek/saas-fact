@@ -161,3 +161,31 @@ export const getTenantUsers = async (tenantId: string): Promise<User[]> => {
   if (error) throw error
   return data as User[]
 }
+
+/**
+ * Pronalaženje tenant-a po Stripe Customer ID-u
+ */
+export const getTenantByStripeCustomerId = async (stripeCustomerId: string): Promise<Tenant | null> => {
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("*")
+    .eq("stripe_customer_id", stripeCustomerId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as Tenant | null;
+};
+
+/**
+ * Kreiranje novog korisnika u tenantu (za pozivnice)
+ */
+export const createTenantUser = async (user: UserInsert): Promise<User> => {
+  const { data, error } = await supabase
+    .from("users")
+    .insert(user)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as User;
+};

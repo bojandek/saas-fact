@@ -117,18 +117,23 @@ export function useAuth(): UseAuthReturn {
         if (signUpError) throw signUpError
         if (!authData.user) throw new Error('Failed to create user')
 
-        const { data: tenantData } = await supabase
+        // 1. Create Tenant first
+        const { data: tenantData, error: tenantError } = await supabase
           .from('tenants')
           .insert({
             name: `${name}'s Workspace`,
-            subdomain: email.split('@')[0].toLowerCase() + Math.random().toString(36).substr(2, 9),
+            subdomain: email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substring(2, 6),
             plan: 'free',
           } as any)
           .select()
           .single()
 
-        if (!tenantData) throw new Error('Failed to create tenant')
+        if (tenantError || !tenantData) {
+          console.error('Tenant creation error:', tenantError)
+          throw new Error('Failed to create workspace. Please try again.')
+        }
 
+        // 2. Create User record linked to Tenant
         const { error: userError } = await supabase
           .from('users')
           .insert({
@@ -139,7 +144,21 @@ export function useAuth(): UseAuthReturn {
             role: 'owner',
           } as any)
 
-        if (userError) throw userError
+        if (userError) {
+          console.error('User record creation error:', userError)
+          // Cleanup tenant if user creation fails (optional, but good for consistency)
+          await supabase.from('tenants').delete().eq('id', tenantData.id)
+          throw new Error('Failed to complete profile setup.')
+        }
+
+        // 3. Create initial subscription record
+        await supabase.from('subscriptions').insert({
+          tenant_id: tenantData.id,
+          status: 'trialing',
+          plan_name: 'Free Trial',
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
+        } as any)
 
         router.push('/auth/verify-email')
       } catch (err) {
