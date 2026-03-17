@@ -1,6 +1,7 @@
 import { execa } from 'execa';
 import fs from 'fs/promises';
 import path from 'path';
+import { KnowledgeExtractorAgent } from './knowledge-extractor-agent';
 
 interface AssemblerInput {
   appName: string;
@@ -22,10 +23,12 @@ interface AssemblerInput {
 export class AssemblerAgent {
   private baseAppPath: string;
   private appsDir: string;
+  private knowledgeExtractorAgent: KnowledgeExtractorAgent;
 
   constructor() {
     this.baseAppPath = path.join(process.cwd(), 'apps', 'saas-001-booking');
     this.appsDir = path.join(process.cwd(), 'apps');
+    this.knowledgeExtractorAgent = new KnowledgeExtractorAgent();
   }
 
   private async copyBaseApp(newAppName: string): Promise<string> {
@@ -79,6 +82,16 @@ export class AssemblerAgent {
     await this.applyRlsPolicies(input.blueprint.rlsPolicies);
 
     // Further steps: generate API routes based on apiSpec, generate basic UI components/pages
+
+    // Automatically extract and store knowledge after assembly
+    await this.knowledgeExtractorAgent.extractAndStoreKnowledge(
+      input.appName,
+      input.saasDescription,
+      input.theme,
+      input.blueprint,
+      null, // Landing page content is not directly available here, but can be passed if needed
+      null  // Growth plan is not directly available here, but can be passed if needed
+    );
 
     return `New SaaS application '${newAppName}' assembled at ${targetAppPath}`;
   }
