@@ -18,6 +18,7 @@
 import OpenAI from 'openai'
 import { logger } from './utils/logger'
 import { getMemoryOrchestrator } from './memory/memory-orchestrator'
+import { getLearningLoop, type GenerationOutcome } from './autonomous-learning-loop'
 
 export interface AgentMessage {
   sender: string
@@ -262,6 +263,33 @@ export class WarRoomOrchestrator {
     await this.orchestrateSequential([pipelineAgents.deploy])
 
     this.log.info('Full SaaS generation pipeline completed')
+
+    // Autonomous Learning Loop — record outcome and extract patterns
+    try {
+      const learningLoop = await getLearningLoop()
+      const outcome: GenerationOutcome = {
+        generation_id: `gen-${this.context.appName}-${Date.now()}`,
+        saas_description: this.context.saasDescription,
+        timestamp: new Date().toISOString(),
+        assembler_success: !failures.some(f => f.name === 'deploy'),
+        deploy_success: !failures.some(f => f.name === 'deploy'),
+        agent_errors: failures.map(f => ({
+          agent: f.name,
+          error: f.error?.message ?? 'Unknown error',
+          resolved: false,
+        })),
+        blocks_used: [],
+        sql_tables_count: 0,
+        components_generated: 0,
+        generation_time_ms: 0,
+        typescript_errors: 0,
+        missing_blocks: [],
+      }
+      await learningLoop.recordOutcome(outcome)
+      this.log.info({ generation_id: outcome.generation_id }, 'Outcome recorded in Autonomous Learning Loop')
+    } catch (err) {
+      this.log.warn({ err }, 'Failed to record outcome in learning loop (non-fatal)')
+    }
 
     // Automatically ingest the pipeline results into Always-On Memory
     try {

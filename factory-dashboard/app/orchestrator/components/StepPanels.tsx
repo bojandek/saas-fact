@@ -1,5 +1,6 @@
 'use client'
 
+import { OneClickDeploy } from '../../../components/deploy/OneClickDeploy'
 import type {
   Step,
   GeneratedTheme,
@@ -322,12 +323,20 @@ export function StepPanels({
       {currentStep === 'deploy' && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Step 9: Deploy to Production</h2>
-          <p className="text-gray-500 text-sm">Coolify Agent will deploy your SaaS to your production environment.</p>
-          <ActionButton onClick={onDeploy} disabled={loading || !theme || !blueprint}>
-            Deploy SaaS
-          </ActionButton>
+          <p className="text-gray-500 text-sm">
+            One-click deploy to your Coolify instance. Configure your repository and hit deploy.
+          </p>
+          <OneClickDeploy
+            appName={appName}
+            gitRepository={`https://github.com/your-org/${appName}`}
+            onDeploySuccess={(url) => {
+              onDeploy()
+              onGoToStep('complete')
+            }}
+            onDeployError={(error) => console.error('Deploy error:', error)}
+          />
           {deploymentResult && (
-            <ResultCard title="Deployment Result" color="green">
+            <ResultCard title="Legacy Deployment Result" color="green">
               <p className="text-sm text-green-800">{deploymentResult}</p>
               <ActionButton onClick={() => onGoToStep('complete')} variant="secondary">
                 Finish →
