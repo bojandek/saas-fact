@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { KnowledgeExtractorAgent } from './knowledge-extractor-agent';
 import { QaAgent } from './qa-agent';
+import { NanoBananaComponentGenerator, GeneratedComponent } from '../../packages/ui/src/lib/component-generator';
 
 interface AssemblerInput {
   appName: string;
@@ -80,6 +81,46 @@ export class AssemblerAgent {
     // Similar to SQL schema, these would be applied to Supabase
   }
 
+  private async generateAndSaveComponents(appPath: string, theme: AssemblerInput['theme'], saasDescription: string) {
+    const componentGenerator = new NanoBananaComponentGenerator();
+    // Example components to generate based on a generic SaaS. This can be made smarter.
+    const componentsToGenerate = [
+      { name: 'PrimaryButton', type: 'button' },
+      { name: 'AuthForm', type: 'form', properties: { fields: [{ name: 'email', label: 'Email', type: 'email' }, { name: 'password', label: 'Password', type: 'password' }] } },
+      { name: 'DashboardCard', type: 'card' },
+    ];
+
+    const generatedComponents: GeneratedComponent[] = [];
+    for (const compDef of componentsToGenerate) {
+      const config = { componentName: compDef.name, componentType: compDef.type as any, theme, properties: compDef.properties };
+      let generatedComp: GeneratedComponent;
+      switch (compDef.type) {
+        case 'form':
+          generatedComp = NanoBananaComponentGenerator.generateFormComponent(config);
+          break;
+        case 'card':
+          generatedComp = NanoBananaComponentGenerator.generateCardComponent(config);
+          break;
+        case 'button':
+          generatedComp = NanoBananaComponentGenerator.generateButtonComponent(config);
+          break;
+        default:
+          generatedComp = NanoBananaComponentGenerator.generateCardComponent(config);
+      }
+      generatedComponents.push(generatedComp);
+    }
+
+    const componentsDir = path.join(appPath, 'src', 'components', 'generated');
+    await fs.mkdir(componentsDir, { recursive: true });
+
+    for (const comp of generatedComponents) {
+      const filePath = path.join(componentsDir, `${comp.name}.tsx`);
+      await fs.writeFile(filePath, comp.code);
+      console.log(`Generated component ${comp.name} saved to ${filePath}`);
+    }
+    console.log(`Generated ${generatedComponents.length} UI components for ${appPath}`);
+  }
+
   async assemble(input: AssemblerInput): Promise<string> {
     const newAppName = `saas-${input.appName.toLowerCase().replace(/\s/g, '-')}`;
     const targetAppPath = await this.copyBaseApp(newAppName);
@@ -88,9 +129,11 @@ export class AssemblerAgent {
     await this.applySqlSchema(input.blueprint.sqlSchema);
     await this.applyRlsPolicies(input.blueprint.rlsPolicies);
 
+    // Generate and save UI components based on theme and description
+    await this.generateAndSaveComponents(targetAppPath, input.theme, input.saasDescription);
+
     // Further steps: generate API routes based on apiSpec, generate basic UI components/pages
 
-    // Automatically extract and store knowledge after assembly
     // Automatically extract and store knowledge after assembly
     await this.knowledgeExtractorAgent.extractAndStoreKnowledge(
       input.appName,
