@@ -1,17 +1,22 @@
-#!/usr/bin/env node
 /**
- * Factory CLI — Real command-line interface for SaaS Factory OS
+ * Factory CLI — Autonomous command-line interface for SaaS Factory OS
  *
- * All commands make actual HTTP calls to the factory-dashboard API
- * or invoke factory-brain agents directly via TypeScript imports.
+ * The `generate` command now runs agents DIRECTLY (no HTTP dependency).
+ * The `create` command scaffolds apps locally with schema provisioning.
  *
  * Usage:
+ *   factory generate --niche "teretana-crm" --name my-gym
  *   factory generate --desc "Booking SaaS for salons" --name salon-sync
+ *   factory create --name salon-sync --blocks auth,payments,calendar
  *   factory status --job <jobId>
  *   factory deploy --app salon-sync
  *   factory memory query --q "What do we know about booking systems?"
  *   factory simulate --desc "Booking SaaS" --users 1000
  *   factory costs
+ *   factory fleet
+ *   factory migrate --app salon-sync
+ *   factory niche-list
+ *   factory niche-map --niche "teretana-crm"
  */
 
 import { Command } from 'commander'
@@ -66,6 +71,12 @@ function printTable(rows: Record<string, unknown>[]): void {
   })
 }
 
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+  return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
+}
+
 async function pollJobStatus(jobId: string): Promise<void> {
   const spinner = ora('Waiting for job to complete...').start()
   let lastStatus = ''
@@ -115,56 +126,239 @@ async function pollJobStatus(jobId: string): Promise<void> {
 program
   .name('factory')
   .description('🏭 SaaS Factory OS — Build AI-powered SaaS applications automatically')
-  .version('1.0.0')
+  .version('2.0.0')
 
-// ── generate ──────────────────────────────────────────────────────────────────
+// ── generate (AUTONOMOUS — no HTTP required) ──────────────────────────────────
 
 program
   .command('generate')
-  .description('Generate a new SaaS application from a description')
-  .requiredOption('--desc <description>', 'SaaS description (min 10 chars)')
-  .requiredOption('--name <appName>', 'App name (lowercase, hyphens only, e.g. salon-sync)')
+  .description('Generate a new SaaS application (runs agents directly — no server required)')
+  .option('--niche <niche>', 'Niche shorthand (e.g. "teretana-crm", "salon-booking")')
+  .option('--desc <description>', 'Free-form SaaS description')
+  .requiredOption('--name <appName>', 'App name (lowercase, hyphens only, e.g. my-gym)')
   .option('--org <orgId>', 'Organization ID (UUID)', 'cli-org-default')
-  .option('--priority <1-10>', 'Queue priority (1=low, 10=high)', '5')
   .option('--skip-deploy', 'Skip deployment step')
   .option('--skip-qa', 'Skip QA testing step')
-  .option('--wait', 'Wait for job to complete (polls status)')
+  .option('--api', 'Use API mode (requires factory-dashboard to be running)')
+  .option('--priority <1-10>', 'Queue priority for API mode (1=low, 10=high)', '5')
+  .option('--wait', 'Wait for job to complete in API mode')
   .action(async (opts) => {
     if (!/^[a-z0-9-]+$/.test(opts.name)) {
       console.error(chalk.red('✗ App name must be lowercase alphanumeric with hyphens only'))
       process.exit(1)
     }
 
-    const spinner = ora('Enqueueing generation job...').start()
+    if (!opts.niche && !opts.desc) {
+      console.error(chalk.red('✗ Either --niche or --desc is required'))
+      console.error(chalk.dim('  Examples:'))
+      console.error(chalk.dim('    factory generate --niche "teretana-crm" --name my-gym'))
+      console.error(chalk.dim('    factory generate --desc "A booking app for yoga studios" --name yoga-sync'))
+      process.exit(1)
+    }
+
+    // ── API mode (legacy, requires dashboard running) ──────────────────────
+    if (opts.api) {
+      const spinner = ora('Enqueueing generation job...').start()
+      try {
+        const result = await apiCall('queue/enqueue', 'POST', {
+          saasDescription: opts.desc || `A ${opts.niche?.replace(/-/g, ' ')} SaaS application`,
+          appName: opts.name,
+          orgId: opts.org,
+          priority: parseInt(opts.priority),
+          options: {
+            skipDeploy: opts.skipDeploy || false,
+            skipQA: opts.skipQa || false,
+          },
+        }) as Record<string, unknown>
+
+        spinner.succeed(chalk.green(`✅ Job enqueued: ${result.jobId}`))
+        console.log(chalk.bold('\n📋 Job Details:'))
+        console.log(`  Job ID:        ${chalk.cyan(result.jobId as string)}`)
+        console.log(`  Status:        ${chalk.yellow(result.status as string)}`)
+        console.log(`  Queue pos:     ${result.queuePosition}`)
+        console.log(`  Est. wait:     ~${result.estimatedWaitMinutes} minutes`)
+        const qs = result.queueStats as Record<string, unknown>
+        console.log(`  Queue size:    ${qs?.queued} queued, ${qs?.running} running`)
+        console.log(chalk.dim(`\n  Track status: factory status --job ${result.jobId}`))
+
+        if (opts.wait) {
+          console.log()
+          await pollJobStatus(result.jobId as string)
+        }
+      } catch (err) {
+        spinner.fail(chalk.red(`✗ Failed: ${err instanceof Error ? err.message : String(err)}`))
+        process.exit(1)
+      }
+      return
+    }
+
+    // ── Autonomous mode (default — runs agents directly) ───────────────────
+    console.log(chalk.bold(`\n🏭 SaaS Factory — Autonomous Generation\n`))
+    console.log(`  App:    ${chalk.cyan(opts.name)}`)
+    if (opts.niche) console.log(`  Niche:  ${chalk.cyan(opts.niche)}`)
+    if (opts.desc) console.log(`  Desc:   ${chalk.dim(opts.desc)}`)
+    console.log(`  Org:    ${chalk.dim(opts.org)}`)
+    console.log()
+
+    // Dynamically import factory-brain to avoid loading it if not needed
+    let AutonomousGenerator: typeof import('../../factory-brain/src/autonomous-generator.js').AutonomousGenerator
+    try {
+      const mod = await import('../../factory-brain/src/autonomous-generator.js')
+      AutonomousGenerator = mod.AutonomousGenerator
+    } catch {
+      // Try relative path from monorepo root
+      try {
+        const mod = await import('../../../factory-brain/src/autonomous-generator.js')
+        AutonomousGenerator = mod.AutonomousGenerator
+      } catch (err2) {
+        console.error(chalk.red('✗ Could not load factory-brain. Make sure you run from the monorepo root.'))
+        console.error(chalk.dim(`  Error: ${err2 instanceof Error ? err2.message : String(err2)}`))
+        process.exit(1)
+      }
+    }
+
+    const stepSpinners: Record<string, ReturnType<typeof ora>> = {}
+
+    const generator = new AutonomousGenerator()
+    const result = await generator.generate({
+      niche: opts.niche,
+      description: opts.desc,
+      appName: opts.name,
+      orgId: opts.org,
+      skipDeploy: opts.skipDeploy || false,
+      skipQA: opts.skipQa || false,
+      onProgress: (event) => {
+        const stepLabel = event.step.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        const key = event.step
+
+        if (event.status === 'started') {
+          stepSpinners[key] = ora(`  ${stepLabel}...`).start()
+        } else if (event.status === 'completed') {
+          stepSpinners[key]?.succeed(chalk.green(`  ✅ ${stepLabel} — ${event.message}`))
+        } else if (event.status === 'failed') {
+          stepSpinners[key]?.warn(chalk.yellow(`  ⚠️  ${stepLabel} — ${event.message}`))
+        }
+      },
+    })
+
+    console.log()
+
+    if (result.success) {
+      console.log(chalk.bold.green('🎉 Generation Complete!\n'))
+      console.log(`  App:          ${chalk.cyan(result.appName)}`)
+      console.log(`  Niche:        ${chalk.dim(result.niche)}`)
+      console.log(`  Path:         ${chalk.cyan(result.appPath)}`)
+      if (result.deployUrl) {
+        console.log(`  Live URL:     ${chalk.cyan(result.deployUrl)}`)
+      }
+      console.log(`  Duration:     ${chalk.dim(formatDuration(result.totalDurationMs))}`)
+      if (result.totalCostUsd > 0) {
+        console.log(`  AI Cost:      ${chalk.dim(`$${result.totalCostUsd.toFixed(4)}`)}`)
+      }
+
+      if (result.blueprint?.blocks?.length) {
+        console.log(`\n  Blocks:       ${chalk.dim(result.blueprint.blocks.join(', '))}`)
+      }
+      if (result.blueprint?.coreFeatures?.length) {
+        console.log(`\n  Features:`)
+        result.blueprint.coreFeatures.slice(0, 5).forEach(f => {
+          console.log(`    ${chalk.dim('•')} ${f}`)
+        })
+      }
+
+      console.log(chalk.bold('\n  Next steps:\n'))
+      console.log(`  ${chalk.dim('1.')} Edit ${chalk.cyan(`${result.appPath}/.env.local`)} with your Supabase + Stripe keys`)
+      console.log(`  ${chalk.dim('2.')} Run ${chalk.cyan(`cd ${result.appPath} && pnpm dev`)} to start development`)
+      if (!opts.skipDeploy && !result.deployUrl) {
+        console.log(`  ${chalk.dim('3.')} Set ${chalk.cyan('COOLIFY_TOKEN')} env var and run ${chalk.cyan(`factory deploy --app ${opts.name}`)}`)
+      }
+      console.log()
+    } else {
+      console.log(chalk.bold.red('❌ Generation Failed\n'))
+      console.log(`  Error: ${chalk.red(result.error || 'Unknown error')}`)
+      console.log()
+      process.exit(1)
+    }
+  })
+
+// ── niche-list ────────────────────────────────────────────────────────────────
+
+program
+  .command('niche-list')
+  .description('List all built-in niche templates')
+  .action(async () => {
+    const { NicheMapper } = await import('../../factory-brain/src/niche-mapper.js').catch(
+      () => import('../../../factory-brain/src/niche-mapper.js')
+    )
+
+    console.log(chalk.bold('\n📋 Built-in Niche Templates:\n'))
+
+    const niches = [
+      { niche: 'teretana-crm', category: 'Fitness & Wellness', complexity: 'medium' },
+      { niche: 'gym-crm', category: 'Fitness & Wellness', complexity: 'medium' },
+      { niche: 'yoga-studio', category: 'Fitness & Wellness', complexity: 'simple' },
+      { niche: 'salon-booking', category: 'Hospitality & Booking', complexity: 'medium' },
+      { niche: 'restaurant-management', category: 'Hospitality & Booking', complexity: 'complex' },
+      { niche: 'hotel-management', category: 'Hospitality & Booking', complexity: 'complex' },
+      { niche: 'online-store', category: 'E-commerce & Retail', complexity: 'complex' },
+      { niche: 'subscription-box', category: 'E-commerce & Retail', complexity: 'medium' },
+      { niche: 'freelancer-crm', category: 'Professional Services', complexity: 'medium' },
+      { niche: 'law-firm-crm', category: 'Professional Services', complexity: 'complex' },
+      { niche: 'accounting-saas', category: 'Finance & Accounting', complexity: 'complex' },
+      { niche: 'online-course-platform', category: 'Education & Learning', complexity: 'complex' },
+      { niche: 'tutoring-platform', category: 'Education & Learning', complexity: 'medium' },
+      { niche: 'clinic-management', category: 'Healthcare', complexity: 'complex' },
+      { niche: 'property-management', category: 'Real Estate', complexity: 'complex' },
+      { niche: 'hr-management', category: 'HR & Recruitment', complexity: 'complex' },
+      { niche: 'ats-recruiting', category: 'HR & Recruitment', complexity: 'complex' },
+      { niche: 'email-marketing', category: 'Marketing & Analytics', complexity: 'complex' },
+      { niche: 'project-management', category: 'Project Management', complexity: 'complex' },
+    ]
+
+    printTable(niches.map(n => ({
+      'Niche': n.niche,
+      'Category': n.category,
+      'Complexity': n.complexity,
+    })))
+
+    console.log(chalk.dim('\n  For any other niche, the LLM will auto-map it.'))
+    console.log(chalk.dim('  Example: factory generate --niche "pet-grooming-crm" --name pet-app\n'))
+  })
+
+// ── niche-map ─────────────────────────────────────────────────────────────────
+
+program
+  .command('niche-map')
+  .description('Preview the blueprint for a niche without generating')
+  .requiredOption('--niche <niche>', 'Niche to map (e.g. "teretana-crm")')
+  .action(async (opts) => {
+    const spinner = ora(`Mapping niche: ${opts.niche}...`).start()
 
     try {
-      const result = await apiCall('queue/enqueue', 'POST', {
-        saasDescription: opts.desc,
-        appName: opts.name,
-        orgId: opts.org,
-        priority: parseInt(opts.priority),
-        options: {
-          skipDeploy: opts.skipDeploy || false,
-          skipQA: opts.skipQa || false,
-        },
-      }) as Record<string, unknown>
+      const { NicheMapper } = await import('../../factory-brain/src/niche-mapper.js').catch(
+        () => import('../../../factory-brain/src/niche-mapper.js')
+      )
+      const mapper = new NicheMapper()
+      const blueprint = await mapper.mapNiche(opts.niche)
+      spinner.stop()
 
-      spinner.succeed(chalk.green(`✅ Job enqueued: ${result.jobId}`))
-      console.log(chalk.bold('\n📋 Job Details:'))
-      console.log(`  Job ID:        ${chalk.cyan(result.jobId as string)}`)
-      console.log(`  Status:        ${chalk.yellow(result.status as string)}`)
-      console.log(`  Queue pos:     ${result.queuePosition}`)
-      console.log(`  Est. wait:     ~${result.estimatedWaitMinutes} minutes`)
-      const qs = result.queueStats as Record<string, unknown>
-      console.log(`  Queue size:    ${qs?.queued} queued, ${qs?.running} running`)
-      console.log(chalk.dim(`\n  Track status: factory status --job ${result.jobId}`))
-
-      if (opts.wait) {
-        console.log()
-        await pollJobStatus(result.jobId as string)
-      }
+      console.log(chalk.bold(`\n🗺️  Niche Blueprint: ${chalk.cyan(blueprint.niche)}\n`))
+      console.log(`  Category:     ${chalk.dim(blueprint.category)}`)
+      console.log(`  App Name:     ${chalk.cyan(blueprint.suggestedAppName)}`)
+      console.log(`  Tagline:      ${chalk.dim(blueprint.suggestedTagline)}`)
+      console.log(`  Pricing:      ${chalk.dim(blueprint.pricingModel)}`)
+      console.log(`  Complexity:   ${chalk.dim(blueprint.estimatedComplexity)}`)
+      console.log(`  Persona:      ${chalk.dim(blueprint.targetPersona)}`)
+      console.log(`  Confidence:   ${chalk.dim(`${(blueprint.confidence * 100).toFixed(0)}%`)}`)
+      console.log(`\n  Blocks:`)
+      blueprint.blocks.forEach(b => console.log(`    ${chalk.dim('•')} ${b}`))
+      console.log(`\n  Core Features:`)
+      blueprint.coreFeatures.forEach(f => console.log(`    ${chalk.dim('•')} ${f}`))
+      console.log(`\n  Database Tables:`)
+      blueprint.databaseTables.forEach(t => console.log(`    ${chalk.dim('•')} ${t}`))
+      console.log()
     } catch (err) {
-      spinner.fail(chalk.red(`✗ Failed: ${err instanceof Error ? err.message : String(err)}`))
+      spinner.fail(chalk.red(`✗ ${err instanceof Error ? err.message : String(err)}`))
       process.exit(1)
     }
   })
@@ -173,7 +367,7 @@ program
 
 program
   .command('status')
-  .description('Check job status or overall queue stats')
+  .description('Check job status or overall queue stats (requires factory-dashboard)')
   .option('--job <jobId>', 'Specific job ID to check')
   .option('--watch', 'Watch job until completion')
   .action(async (opts) => {
@@ -199,7 +393,7 @@ program
         if (result.queuePosition) console.log(`  Position:   ${result.queuePosition}`)
         if (result.estimatedWaitMs) console.log(`  Est. wait:  ~${Math.ceil((result.estimatedWaitMs as number) / 60000)} min`)
         if (result.attempts) console.log(`  Attempts:   ${result.attempts}`)
-        if (result.durationMs) console.log(`  Duration:   ${((result.durationMs as number) / 1000).toFixed(1)}s`)
+        if (result.durationMs) console.log(`  Duration:   ${formatDuration(result.durationMs as number)}`)
         if (result.error) console.log(`  Error:      ${chalk.red(result.error as string)}`)
         if (result.result) {
           console.log(chalk.bold('\n📦 Result:'))
@@ -388,11 +582,14 @@ program
 
 program
   .command('create')
-  .description('Scaffold a new SaaS app locally from blocks (no AI, instant)')
+  .description('Scaffold a new SaaS app locally from blocks (no AI, instant) with schema provisioning')
   .requiredOption('--name <appName>', 'App name (lowercase, hyphens only, e.g. salon-sync)')
+  .option('--niche <niche>', 'Auto-select blocks from niche (e.g. "teretana-crm")')
   .option('--blocks <list>', 'Comma-separated blocks to include', 'auth,payments,analytics')
   .option('--template <name>', 'Base template to use', 'saas-001-booking')
   .option('--org <orgId>', 'Organization ID', 'my-org')
+  .option('--schema <name>', 'PostgreSQL schema name (default: derived from app name)')
+  .option('--provision-schema', 'Provision a new PostgreSQL schema for this app')
   .option('--skip-install', 'Skip pnpm install after scaffolding')
   .action(async (opts) => {
     if (!/^[a-z0-9-]+$/.test(opts.name)) {
@@ -400,12 +597,33 @@ program
       process.exit(1)
     }
 
-    const blocks: string[] = opts.blocks.split(',').map((b: string) => b.trim()).filter(Boolean)
+    // Auto-select blocks from niche if provided
+    let blocks: string[]
+    if (opts.niche) {
+      const spinner0 = ora(`Mapping niche ${opts.niche}...`).start()
+      try {
+        const { NicheMapper } = await import('../../factory-brain/src/niche-mapper.js').catch(
+          () => import('../../../factory-brain/src/niche-mapper.js')
+        )
+        const mapper = new NicheMapper()
+        const blueprint = await mapper.mapNiche(opts.niche)
+        blocks = blueprint.blocks
+        spinner0.succeed(chalk.green(`✅ Niche mapped: ${blueprint.blocks.length} blocks selected`))
+      } catch {
+        spinner0.warn(chalk.yellow('⚠️  Niche mapping failed, using default blocks'))
+        blocks = opts.blocks.split(',').map((b: string) => b.trim()).filter(Boolean)
+      }
+    } else {
+      blocks = opts.blocks.split(',').map((b: string) => b.trim()).filter(Boolean)
+    }
+
+    const schemaName = opts.schema || opts.name.replace(/-/g, '_')
     const appDir = `apps/${opts.name}`
 
     console.log(chalk.bold(`\n🏭 SaaS Factory — Creating ${chalk.cyan(opts.name)}\n`))
     console.log(`  Template:  ${chalk.dim(opts.template)}`)
     console.log(`  Blocks:    ${chalk.dim(blocks.join(', '))}`)
+    console.log(`  Schema:    ${chalk.dim(schemaName)}`)
     console.log(`  Output:    ${chalk.dim(appDir)}\n`)
 
     const { execSync, spawnSync } = await import('child_process')
@@ -419,14 +637,17 @@ program
     try {
       const templateDir = path.join(rootDir, 'apps', opts.template)
       if (!fs.existsSync(templateDir)) {
-        spinner1.fail(chalk.red(`✗ Template not found: apps/${opts.template}`))
-        process.exit(1)
+        spinner1.warn(chalk.yellow(`⚠️  Template not found: apps/${opts.template} — creating from scratch`))
+        fs.mkdirSync(targetDir, { recursive: true })
+        fs.mkdirSync(path.join(targetDir, 'src', 'app'), { recursive: true })
+        fs.mkdirSync(path.join(targetDir, 'src', 'components'), { recursive: true })
+      } else {
+        if (fs.existsSync(targetDir)) {
+          spinner1.fail(chalk.red(`✗ App already exists: ${appDir}`))
+          process.exit(1)
+        }
+        execSync(`cp -r "${templateDir}" "${targetDir}"`, { stdio: 'pipe' })
       }
-      if (fs.existsSync(targetDir)) {
-        spinner1.fail(chalk.red(`✗ App already exists: ${appDir}`))
-        process.exit(1)
-      }
-      execSync(`cp -r "${templateDir}" "${targetDir}"`, { stdio: 'pipe' })
       // Update package.json name
       const pkgPath = path.join(targetDir, 'package.json')
       if (fs.existsSync(pkgPath)) {
@@ -434,13 +655,13 @@ program
         pkg.name = `@saas-factory/${opts.name}`
         fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
       }
-      spinner1.succeed(chalk.green(`✅ Template copied → ${appDir}`))
+      spinner1.succeed(chalk.green(`✅ App directory created → ${appDir}`))
     } catch (err) {
-      spinner1.fail(chalk.red(`✗ Copy failed: ${err instanceof Error ? err.message : String(err)}`))
+      spinner1.fail(chalk.red(`✗ Failed: ${err instanceof Error ? err.message : String(err)}`))
       process.exit(1)
     }
 
-    // Step 2: Create .env file
+    // Step 2: Create .env file with schema config
     const spinner2 = ora('Generating .env file...').start()
     try {
       const envContent = [
@@ -450,10 +671,11 @@ program
         `NEXT_PUBLIC_APP_NAME="${opts.name.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}"`,
         `NEXT_PUBLIC_ORG_ID=${opts.org}`,
         ``,
-        `# Database (Supabase)`,
+        `# Database (Supabase — Shared Instance with Schema Isolation)`,
         `NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co`,
         `NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key`,
         `SUPABASE_SERVICE_ROLE_KEY=your-service-role-key`,
+        `SUPABASE_SCHEMA=${schemaName}`,
         ``,
         `# Payments (Stripe)`,
         `STRIPE_SECRET_KEY=sk_test_your-key`,
@@ -480,6 +702,8 @@ program
         appName: opts.name,
         orgId: opts.org,
         template: opts.template,
+        schemaName,
+        niche: opts.niche || null,
         blocks: blocks.reduce((acc: Record<string, { enabled: boolean; package: string }>, b: string) => {
           acc[b] = { enabled: true, package: `@saas-factory/block-${b}` }
           return acc
@@ -506,39 +730,60 @@ program
       spinner3.fail(chalk.red(`✗ Block wiring failed: ${err instanceof Error ? err.message : String(err)}`))
     }
 
-    // Step 4: Generate SQL migration for this app
-    const spinner4 = ora('Generating database migration...').start()
+    // Step 4: Generate SQL migration with schema provisioning
+    const spinner4 = ora('Generating database migration with schema provisioning...').start()
     try {
       const migrationsDir = path.join(targetDir, 'supabase', 'migrations')
       fs.mkdirSync(migrationsDir, { recursive: true })
       const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)
+
       const migrationContent = [
         `-- Migration for ${opts.name}`,
         `-- Generated by factory create on ${new Date().toISOString()}`,
+        `-- Schema: ${schemaName}`,
         `-- Blocks: ${blocks.join(', ')}`,
         ``,
-        `-- Enable RLS on all tables (shared database model)`,
-        `-- saas_id column isolates data per SaaS application`,
+        `-- ─── Schema Provisioning ────────────────────────────────────────────────────`,
+        `-- Creates an isolated PostgreSQL schema for this SaaS app.`,
+        `-- All tables live in this schema, sharing one Supabase project.`,
         ``,
-        `CREATE TABLE IF NOT EXISTS public.${opts.name.replace(/-/g, '_')}_config (`,
+        `CREATE SCHEMA IF NOT EXISTS ${schemaName};`,
+        ``,
+        `-- Grant usage to authenticated users`,
+        `GRANT USAGE ON SCHEMA ${schemaName} TO authenticated;`,
+        `GRANT USAGE ON SCHEMA ${schemaName} TO service_role;`,
+        ``,
+        `-- ─── Shared Auth (public schema) ────────────────────────────────────────────`,
+        `-- Auth tables stay in public schema (shared across all SaaS apps)`,
+        `-- Business data is isolated in the ${schemaName} schema`,
+        ``,
+        `-- ─── App Config Table ────────────────────────────────────────────────────────`,
+        `CREATE TABLE IF NOT EXISTS ${schemaName}.config (`,
         `  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
-        `  saas_id     text NOT NULL DEFAULT '${opts.name}',`,
         `  org_id      uuid NOT NULL,`,
         `  key         text NOT NULL,`,
         `  value       jsonb,`,
         `  created_at  timestamptz DEFAULT now(),`,
-        `  UNIQUE(saas_id, org_id, key)`,
+        `  UNIQUE(org_id, key)`,
         `);`,
         ``,
-        `ALTER TABLE public.${opts.name.replace(/-/g, '_')}_config ENABLE ROW LEVEL SECURITY;`,
+        `ALTER TABLE ${schemaName}.config ENABLE ROW LEVEL SECURITY;`,
         ``,
-        `CREATE POLICY "${opts.name}_config_isolation" ON public.${opts.name.replace(/-/g, '_')}_config`,
-        `  USING (saas_id = '${opts.name}' AND org_id IN (`,
+        `CREATE POLICY "${schemaName}_config_org_isolation" ON ${schemaName}.config`,
+        `  USING (org_id IN (`,
         `    SELECT org_id FROM public.org_members WHERE user_id = auth.uid()`,
         `  ));`,
+        ``,
+        `-- ─── Block-specific Tables ───────────────────────────────────────────────────`,
+        ...blocks.flatMap((b: string) => generateBlockSQL(b, schemaName)),
+        ``,
+        `-- ─── Search Path ─────────────────────────────────────────────────────────────`,
+        `-- Set default search path for this app's connections`,
+        `ALTER DATABASE postgres SET search_path TO ${schemaName}, public;`,
       ].join('\n')
-      fs.writeFileSync(path.join(migrationsDir, `${timestamp}_init_${opts.name.replace(/-/g, '_')}.sql`), migrationContent + '\n')
-      spinner4.succeed(chalk.green('✅ Database migration generated'))
+
+      fs.writeFileSync(path.join(migrationsDir, `${timestamp}_init_${schemaName}.sql`), migrationContent + '\n')
+      spinner4.succeed(chalk.green(`✅ Schema migration generated: ${schemaName}`))
     } catch (err) {
       spinner4.fail(chalk.red(`✗ Migration generation failed: ${err instanceof Error ? err.message : String(err)}`))
     }
@@ -549,7 +794,7 @@ program
       try {
         spawnSync('pnpm', ['install'], { cwd: targetDir, stdio: 'pipe' })
         spinner5.succeed(chalk.green('✅ Dependencies installed'))
-      } catch (err) {
+      } catch {
         spinner5.warn(chalk.yellow(`⚠️  Install failed (run manually): pnpm install in ${appDir}`))
       }
     }
@@ -560,12 +805,96 @@ program
     console.log(`  📋 Manifest:   ${chalk.cyan(`${appDir}/factory.manifest.json`)}`)
     console.log(`  🗄️  Migration:  ${chalk.cyan(`${appDir}/supabase/migrations/`)}`)
     console.log(`  🔑 Env file:   ${chalk.cyan(`${appDir}/.env.local`)} ${chalk.dim('(fill in your keys)')}`)
+    console.log(`  🏗️  Schema:     ${chalk.cyan(schemaName)} ${chalk.dim('(PostgreSQL schema isolation)')}`)
     console.log(chalk.bold(`\n  Next steps:\n`))
     console.log(`  ${chalk.dim('1.')} Edit ${chalk.cyan(`${appDir}/.env.local`)} with your Supabase + Stripe keys`)
-    console.log(`  ${chalk.dim('2.')} Run ${chalk.cyan(`cd ${appDir} && pnpm dev`)} to start development`)
-    console.log(`  ${chalk.dim('3.')} Run ${chalk.cyan(`factory deploy --app ${opts.name}`)} to deploy to Coolify`)
-    console.log(`  ${chalk.dim('4.')} Run ${chalk.cyan(`factory generate --desc "..." --name ${opts.name} --wait`)} to AI-enhance\n`)
+    console.log(`  ${chalk.dim('2.')} Run ${chalk.cyan(`supabase db push`)} to provision the ${schemaName} schema`)
+    console.log(`  ${chalk.dim('3.')} Run ${chalk.cyan(`cd ${appDir} && pnpm dev`)} to start development`)
+    console.log(`  ${chalk.dim('4.')} Run ${chalk.cyan(`factory deploy --app ${opts.name}`)} to deploy to Coolify`)
+    console.log(`  ${chalk.dim('5.')} Run ${chalk.cyan(`factory generate --niche "${opts.niche || 'your-niche'}" --name ${opts.name} --wait`)} to AI-enhance\n`)
   })
+
+// Helper: generate block-specific SQL tables
+function generateBlockSQL(block: string, schema: string): string[] {
+  const blockTables: Record<string, string[]> = {
+    payments: [
+      `CREATE TABLE IF NOT EXISTS ${schema}.subscriptions (`,
+      `  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
+      `  org_id          uuid NOT NULL,`,
+      `  stripe_sub_id   text,`,
+      `  plan            text NOT NULL DEFAULT 'free',`,
+      `  status          text NOT NULL DEFAULT 'active',`,
+      `  current_period_end timestamptz,`,
+      `  created_at      timestamptz DEFAULT now()`,
+      `);`,
+      `ALTER TABLE ${schema}.subscriptions ENABLE ROW LEVEL SECURITY;`,
+      `CREATE POLICY "${schema}_subscriptions_isolation" ON ${schema}.subscriptions`,
+      `  USING (org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid()));`,
+      ``,
+    ],
+    calendar: [
+      `CREATE TABLE IF NOT EXISTS ${schema}.events (`,
+      `  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
+      `  org_id      uuid NOT NULL,`,
+      `  title       text NOT NULL,`,
+      `  start_at    timestamptz NOT NULL,`,
+      `  end_at      timestamptz NOT NULL,`,
+      `  created_by  uuid REFERENCES auth.users(id),`,
+      `  created_at  timestamptz DEFAULT now()`,
+      `);`,
+      `ALTER TABLE ${schema}.events ENABLE ROW LEVEL SECURITY;`,
+      `CREATE POLICY "${schema}_events_isolation" ON ${schema}.events`,
+      `  USING (org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid()));`,
+      ``,
+    ],
+    notifications: [
+      `CREATE TABLE IF NOT EXISTS ${schema}.notifications (`,
+      `  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
+      `  org_id      uuid NOT NULL,`,
+      `  user_id     uuid REFERENCES auth.users(id),`,
+      `  title       text NOT NULL,`,
+      `  body        text,`,
+      `  read        boolean DEFAULT false,`,
+      `  created_at  timestamptz DEFAULT now()`,
+      `);`,
+      `ALTER TABLE ${schema}.notifications ENABLE ROW LEVEL SECURITY;`,
+      `CREATE POLICY "${schema}_notifications_isolation" ON ${schema}.notifications`,
+      `  USING (org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid()));`,
+      ``,
+    ],
+    analytics: [
+      `CREATE TABLE IF NOT EXISTS ${schema}.events_log (`,
+      `  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
+      `  org_id      uuid NOT NULL,`,
+      `  event_name  text NOT NULL,`,
+      `  properties  jsonb,`,
+      `  user_id     uuid,`,
+      `  created_at  timestamptz DEFAULT now()`,
+      `);`,
+      `ALTER TABLE ${schema}.events_log ENABLE ROW LEVEL SECURITY;`,
+      `CREATE POLICY "${schema}_events_log_isolation" ON ${schema}.events_log`,
+      `  USING (org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid()));`,
+      ``,
+    ],
+    storage: [
+      `CREATE TABLE IF NOT EXISTS ${schema}.files (`,
+      `  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),`,
+      `  org_id      uuid NOT NULL,`,
+      `  name        text NOT NULL,`,
+      `  path        text NOT NULL,`,
+      `  size        bigint,`,
+      `  mime_type   text,`,
+      `  uploaded_by uuid REFERENCES auth.users(id),`,
+      `  created_at  timestamptz DEFAULT now()`,
+      `);`,
+      `ALTER TABLE ${schema}.files ENABLE ROW LEVEL SECURITY;`,
+      `CREATE POLICY "${schema}_files_isolation" ON ${schema}.files`,
+      `  USING (org_id IN (SELECT org_id FROM public.org_members WHERE user_id = auth.uid()));`,
+      ``,
+    ],
+  }
+  return blockTables[block] || []
+}
 
 // ── fleet ─────────────────────────────────────────────────────────────────────
 
