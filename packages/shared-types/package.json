@@ -1,0 +1,45 @@
+{
+  "name": "@saas-factory/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for SaaS Factory — used by factory-brain agents and all generated SaaS applications",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./agents": {
+      "types": "./dist/agents.d.ts",
+      "import": "./dist/agents.mjs",
+      "require": "./dist/agents.js"
+    },
+    "./saas": {
+      "types": "./dist/saas.d.ts",
+      "import": "./dist/saas.mjs",
+      "require": "./dist/saas.js"
+    },
+    "./fleet": {
+      "types": "./dist/fleet.d.ts",
+      "import": "./dist/fleet.mjs",
+      "require": "./dist/fleet.js"
+    },
+    "./api": {
+      "types": "./dist/api.d.ts",
+      "import": "./dist/api.mjs",
+      "require": "./dist/api.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/agents.ts src/saas.ts src/fleet.ts src/api.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}
