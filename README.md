@@ -1,457 +1,95 @@
-# 🏢 SaaS Factory - Complete SaaS Boilerplate
+# SaaS Factory - Vrhunska Platforma za Gradnju SaaS Aplikacija
 
-**The fastest way to launch a production-ready SaaS app.**
+Dobrodošli u **SaaS Factory** – vašu autonomnu tvornicu softvera koja pretvara ideje u produkcijski spremne SaaS aplikacije, koristeći najnovije AI tehnologije i najbolje prakse u industriji.
 
-✨ **Built with:** Next.js 14 + TypeScript + Tailwind + Supabase + Stripe + Resend  
-🔐 **Features:** Multi-tenant auth, payments, emails, database, CI/CD  
-🚀 **Status:** Production-ready, tested, documented
+## 🚀 Što je SaaS Factory?
 
----
+SaaS Factory je monorepo sustav izgrađen s `pnpm workspaces` i `Turborepo`, dizajniran za izuzetnu skalabilnost i modularnost. Srce sustava je **Orchestrator**, inteligentni AI sustav koji koordinira rad specijaliziranih agenata kako bi automatizirao cijeli životni ciklus SaaS-a:
 
-## 🎯 What You Get
+-   **Nano Banana UI Engine**: Generira vrhunski, unikatni UI dizajn i komponente.
+-   **Architect Agent**: Dizajnira bazu podataka (SQL sheme, RLS politike) i API arhitekturu.
+-   **Assembler Agent**: Sklapa kod u funkcionalnu aplikaciju koristeći Micro-Frontend arhitekturu i gotove blokove.
+-   **Landing Page Generator**: Kreira marketinške stranice za vaš SaaS.
+-   **Growth Hacker Agent**: Planira SEO, social media i email kampanje.
+-   **Compliance Checker**: Provjerava usklađenost s regulativama (GDPR, SOC2).
+-   **QA Agent**: Generira automatske Playwright testove za osiguranje kvalitete.
+-   **Legal & Terms Generator**: Automatski generira pravne dokumente (ToS, Privacy Policy).
+-   **War Room Orchestrator**: Koordinira komunikaciju i suradnju između svih agenata.
+-   **Autonomous Learning Loop**: Sustav koji samostalno uči iz svakog generiranog SaaS-a i poboljšava svoje performanse.
 
-### 🔐 **Authentication Block** (blocks/auth/)
-- Supabase Auth integration
-- Email/password signup & login
-- Multi-tenant support
-- Session management
-- Protected routes middleware
+## ✨ Ključne Značajke
 
-### 🗄️ **Database Block** (blocks/database/)
-- Complete schema (users, tenants, subscriptions)
-- Type-safe query helpers
-- Multi-tenant isolation
-- Proper error handling
+-   **AI-Powered Development**: Od ideje do koda uz minimalnu ljudsku intervenciju.
+-   **Micro-Frontend Arhitektura**: Svaki SaaS je nezavisan modul, spreman za skaliranje.
+-   **Multi-Tenant Ready**: Ugrađena sigurnost i izolacija podataka (RLS).
+-   **Vrhunski Dizajn**: Nano Banana osigurava Apple-level UX/UI.
+-   **Automatsko Testiranje**: QA Agent garantira kvalitetu koda.
+-   **Pravna Sigurnost**: Automatsko generiranje ključnih pravnih dokumenata.
+-   **Kontinuirano Učenje**: Sustav postaje pametniji sa svakim novim projektom.
+-   **Integracija s Coolify**: Jednostavan "One-Click Deploy" na produkciju.
 
-### 💳 **Payments Block** (blocks/payments/)
-- Stripe integration
-- Subscription checkout
-- Webhook-based DB sync
-- Customer management
+## 🚀 Kako Koristiti SaaS Factory Orchestrator?
 
-### 📧 **Emails Block** (blocks/emails/)
-- Resend email service
-- HTML email templates
-- Welcome & password reset emails
-- Easy to extend
+### 1. Pristup Dashboardu
 
-### 🎨 **Complete App** (apps/saas-001-booking/)
-- Landing page
-- Auth pages (login/register)
-- Protected dashboard
-- Billing management
-- Settings page
-- API endpoints
+Pokrenite `factory-dashboard` aplikaciju:
 
-### 📦 **Monorepo Setup**
-- Turbo for fast builds
-- pnpm workspaces
-- Shared packages (core, db, ui)
-- Path aliases
-
-### 🔄 **CI/CD Pipeline**
-- GitHub Actions configured
-- Automated tests
-- Docker builds
-- Auto-deploy to Coolify
-
-### 📚 **Complete Documentation**
-- SETUP.md - Local development
-- FINAL_DEPLOYMENT_GUIDE.md - 5-step production deploy
-- PRODUCTION_DEPLOYMENT.md - Detailed production guide
-- DEPLOYMENT_CHECKLIST.md - Pre-deployment checklist
-- API documentation (OpenAPI + TypeDoc)
-
----
-
-## 🚀 Quick Start (5 minutes)
-
-### 1. Clone & Install
-```bash
-git clone https://github.com/bojandek/saas-fact.git
-cd saas-fact
-pnpm install
-```
-
-### 2. Setup Environment
-```bash
-# Navigate to app
-cd apps/saas-001-booking
-
-# Create environment file
-cp .env.example .env.local
-
-# Add test credentials (see SETUP.md)
-```
-
-### 3. Start Development
 ```bash
 pnpm dev
-# Visit http://localhost:3000
 ```
 
-### 4. Test the Flow
-- Register new account
-- Login
-- View dashboard
-- (Optional) Test Stripe with test keys
+Navigirajte na `/orchestrator` stranicu u vašem pregledniku.
+
+### 2. Unesite Opis Vaše Ideje
+
+U Orchestrator sučelju, unesite detaljan opis vašeg SaaS-a. Što je opis detaljniji, to će AI agenti generirati preciznije rezultate.
+
+*Primjer: "Moderni CRM za male zubare s mogućnošću zakazivanja termina, upravljanja pacijentima i automatskog slanja SMS podsjetnika. Dizajn treba biti čist, profesionalan, s plavim i zelenim akcentima. Treba podržavati više lokacija ordinacija i biti GDPR usklađen."*
+
+### 3. Pratite Proces Generiranja
+
+Sustav će automatski proći kroz sljedeće korake, a vi možete pratiti komunikaciju agenata u "War Room" logu:
+
+1.  **Nano Banana UI Engine**: Generira unikatnu paletu boja, tipografiju i UI komponente.
+2.  **Architect Agent**: Dizajnira SQL shemu, API specifikaciju i RLS politike.
+3.  **Landing Page Generator**: Kreira marketinšku stranicu s cijenama i značajkama.
+4.  **Growth Hacker Agent**: Planira SEO, social media i email kampanje.
+5.  **Compliance Checker**: Provjerava usklađenost s regulativama (npr. GDPR).
+6.  **QA Agent**: Generira Playwright testove za ključne funkcionalnosti.
+7.  **Legal & Terms Generator**: Kreira pravne dokumente (ToS, Privacy Policy).
+8.  **Assembler Agent**: Sklapa sve u novu SaaS aplikaciju u `apps/saas-{vaša-ideja}`.
+
+### 4. Pregled, Testiranje i Deploy
+
+Nakon što je proces završen, vaša nova SaaS aplikacija je spremna:
+
+-   **Pregled koda**: Pronađite je u `apps/saas-{vaša-ideja}`.
+-   **Pokretanje testova**: `cd apps/saas-{vaša-ideja} && pnpm test`
+-   **Deploy na Coolify**: Koristite integraciju za "One-Click Deploy" na vašu produkcijsku infrastrukturu.
+
+## 🛠️ Struktura Monorepa
+
+-   **`apps/`**: Sadrži sve generirane SaaS aplikacije (Micro-Frontends) i `factory-dashboard`.
+-   **`blocks/`**: Višekratno upotrebljivi moduli (Auth, Database, Payments, Social Media Integration, Advanced Multi-Tenant, itd.).
+-   **`packages/`**: Zajedničke komponente i utilsi (`ui`, `db`, `core`).
+-   **`factory-brain/`**: Srce AI inteligencije, sadrži sve agente i bazu znanja (`knowledge/`).
+
+## 📚 Baza Znanja (Factory Brain Knowledge)
+
+`factory-brain/knowledge/` sadrži stručne dokumente koje AI agenti koriste za donošenje odluka. Ovdje su pohranjeni principi Apple dizajna, Clean Architecture, SaaS strategije, sigurnosne smjernice i znanje iz analiziranih open-source projekata.
+
+## 🛡️ Sigurnost i Kvaliteta
+
+SaaS Factory je izgrađen s fokusom na sigurnost i kvalitetu:
+
+-   **Row Level Security (RLS)**: Automatska izolacija podataka između tenanta.
+-   **Automatsko Testiranje**: QA Agent osigurava da je svaka generirana aplikacija funkcionalna i bez bugova.
+-   **Compliance Checks**: Provjera usklađenosti s industrijskim standardima.
+
+## 📈 Budući Razvoj
+
+Sustav je dizajniran za kontinuirano učenje i proširenje. Kroz `Autonomous Learning Loop` i `OpenCrawl` integraciju, SaaS Factory će se stalno poboljšavati i prilagođavati najnovijim trendovima i najboljim praksama.
 
 ---
 
-## 📦 Project Structure
-
-```
-saas-fact/
-├── apps/
-│   ├── saas-001-booking/          # Main Next.js app (hair salon booking)
-│   │   ├── app/                   # Next.js App Router
-│   │   │   ├── (auth)/            # Auth routes (login, register)
-│   │   │   ├── (dashboard)/       # Protected dashboard
-│   │   │   ├── api/               # API routes (checkout, webhooks)
-│   │   │   ├── billing/           # Subscription management
-│   │   │   └── settings/          # Account settings
-│   │   ├── SETUP.md               # Local setup guide
-│   │   ├── COMPLETION_SUMMARY.md  # What was built
-│   │   └── .env.example
-│   │
-│   └── saas-002-cms/              # (Optional) CMS app skeleton
-│
-├── blocks/                         # Reusable business logic
-│   ├── auth/                       # Supabase Auth + UI components
-│   ├── database/                   # Queries + types
-│   ├── payments/                   # Stripe integration
-│   └── emails/                     # Resend integration
-│
-├── packages/                       # Shared packages
-│   ├── core/                       # Core utilities
-│   ├── db/                         # Database utilities
-│   └── ui/                         # UI components
-│
-├── factory-brain/                  # AI agents & knowledge base
-├── factory-dashboard/              # Admin dashboard
-├── docs/                           # Documentation
-│   ├── openapi.yaml               # API spec
-│   └── API.md                     # API guide
-│
-├── .github/workflows/              # GitHub Actions
-│   ├── test.yml                   # Run tests
-│   ├── build.yml                  # Build Docker
-│   ├── deploy.yml                 # Deploy to Coolify
-│   └── docs.yml                   # Generate docs
-│
-├── Dockerfile                      # Production Docker image
-├── FINAL_DEPLOYMENT_GUIDE.md       # 5-step production deploy ⭐
-├── PRODUCTION_DEPLOYMENT.md        # Detailed production guide
-└── README.md                       # This file
-```
-
----
-
-## 🔑 Key Features
-
-### ✅ Complete Auth Flow
-```
-Register → Create tenant → Email verification → Login → Dashboard
-```
-
-### ✅ Payment Integration
-```
-Dashboard → Billing → Stripe Checkout → Webhook → DB Update
-```
-
-### ✅ Multi-Tenant Architecture
-```
-Each user → belongs to → Tenant (organization)
-Tenant → has many → Subscriptions
-User → has many → Sessions
-```
-
-### ✅ Type Safety
-```typescript
-// All types auto-inferred from Zod schemas
-const formData: TFormData = await form.validate()
-const user: User = await db.getUserById(id)
-```
-
-### ✅ Protected Routes
-```typescript
-// Middleware validates session + tenant_id
-// Automatically redirects unauthenticated users to login
-// Sets headers with user metadata
-```
-
-### ✅ Webhook Integration
-```
-Stripe Event → Verify Signature → Process → Update Supabase
-```
-
----
-
-## 📋 Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | Next.js 14, React 18, TypeScript |
-| **Styling** | Tailwind CSS, CVA |
-| **Forms** | React Hook Form, Zod |
-| **Auth** | Supabase Auth |
-| **Database** | Supabase PostgreSQL |
-| **Payments** | Stripe API |
-| **Emails** | Resend API |
-| **Testing** | Vitest, React Testing Library |
-| **Monorepo** | Turbo, pnpm workspaces |
-| **CI/CD** | GitHub Actions |
-| **Deployment** | Docker, Coolify |
-| **Docs** | TypeDoc, OpenAPI |
-
----
-
-## 🎓 Learning Paths
-
-### 👶 **Beginner** (Start here)
-1. Read this README
-2. Run locally (see "Quick Start")
-3. Read SETUP.md
-4. Test registration flow
-5. Test login flow
-
-### 👨‍💻 **Intermediate**
-1. Review blocks/auth/src/ code
-2. Review blocks/database/src/ code
-3. Check API routes in apps/saas-001-booking/app/api/
-4. Review GitHub Actions workflows
-5. Add new database table + queries
-
-### 🚀 **Advanced**
-1. Read PRODUCTION_DEPLOYMENT.md
-2. Setup production Supabase project
-3. Setup production Stripe account
-4. Deploy using FINAL_DEPLOYMENT_GUIDE.md
-5. Monitor in production
-6. Add new features
-
----
-
-## 📖 Documentation
-
-### For Development
-- **[SETUP.md](apps/saas-001-booking/SETUP.md)** - Local dev setup (Supabase, Stripe, Resend)
-- **[COMPLETION_SUMMARY.md](apps/saas-001-booking/COMPLETION_SUMMARY.md)** - What was built
-- **[docs/API.md](docs/API.md)** - API endpoints
-- **[docs/openapi.yaml](docs/openapi.yaml)** - OpenAPI spec
-
-### For Deployment
-- **[FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md)** ⭐ - 5-step production deploy (START HERE)
-- **[PRODUCTION_DEPLOYMENT.md](apps/saas-001-booking/PRODUCTION_DEPLOYMENT.md)** - Detailed steps
-- **[DEPLOYMENT_CHECKLIST.md](apps/saas-001-booking/DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
-- **[.github/WORKFLOW_SETUP.md](.github/WORKFLOW_SETUP.md)** - GitHub Actions setup
-
-### Architecture
-- **[EXPERT_RECOMMENDATIONS.md](EXPERT_RECOMMENDATIONS.md)** - Design patterns & recommendations
-- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - What's implemented
-
----
-
-## 🚀 Production Deployment
-
-### Quick Deploy (1 hour)
-Follow **[FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md)** - covers:
-1. Supabase production setup (10 min)
-2. Stripe production setup (15 min)
-3. Resend production setup (5 min)
-4. Coolify configuration (15 min)
-5. DNS setup (10 min + wait)
-6. Testing (10 min)
-
-### Detailed Guide
-See **[PRODUCTION_DEPLOYMENT.md](apps/saas-001-booking/PRODUCTION_DEPLOYMENT.md)** for:
-- Step-by-step production setup
-- Environment variable guide
-- Webhook configuration
-- Troubleshooting
-
-### Pre-Deployment
-Use **[DEPLOYMENT_CHECKLIST.md](apps/saas-001-booking/DEPLOYMENT_CHECKLIST.md)** to:
-- Verify code quality
-- Test payment flow
-- Check security
-- Validate configuration
-
----
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-pnpm test              # Run all tests
-pnpm test:watch       # Watch mode
-pnpm test:coverage    # Coverage report
-```
-
-### Type Check
-```bash
-pnpm type-check       # TypeScript check
-```
-
-### Lint
-```bash
-pnpm lint             # ESLint
-```
-
-### Format
-```bash
-pnpm format           # Prettier
-```
-
----
-
-## 🔄 Development Workflow
-
-### 1. Create Feature Branch
-```bash
-git checkout -b feature/my-feature
-```
-
-### 2. Make Changes
-```bash
-# Code your feature
-# Tests automatically run on save
-pnpm test:watch
-```
-
-### 3. Test Locally
-```bash
-pnpm dev
-# Visit http://localhost:3000
-# Test your feature
-```
-
-### 4. Commit & Push
-```bash
-git add .
-git commit -m "feat: add my feature"
-git push origin feature/my-feature
-```
-
-### 5. Create Pull Request
-- Go to GitHub → Create PR
-- GitHub Actions runs tests automatically
-- Merge when tests pass
-
-### 6. Auto-Deploy
-- Merge PR to `main`
-- GitHub Actions builds
-- Auto-deploys to Coolify
-- Website updates in ~2-3 minutes
-
----
-
-## 📊 Architecture Diagram
-
-```
-┌─────────────────────────────────────────────┐
-│          User's Browser                      │
-│  visits https://yourdomain.com              │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-        ┌──────────────────────┐
-        │   Next.js App        │
-        │  (saas-001-booking)  │
-        └──────────────┬───────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-        ▼              ▼              ▼
-    ┌────────┐   ┌──────────┐   ┌────────┐
-    │  Auth  │   │ Database │   │Payments│
-    │ Block  │   │  Block   │   │ Block  │
-    └────┬───┘   └────┬─────┘   └───┬────┘
-         │             │             │
-    ┌────▼─────────────▼─────────────▼────┐
-    │                                      │
-    │    External Services               │
-    │  ┌──────────────────────────────┐  │
-    │  │ Supabase (Auth + Database)   │  │
-    │  │ Stripe (Payments)            │  │
-    │  │ Resend (Emails)              │  │
-    │  └──────────────────────────────┘  │
-    └──────────────────────────────────────┘
-```
-
----
-
-## 🆘 Getting Help
-
-### Check Documentation First
-- See [SETUP.md](apps/saas-001-booking/SETUP.md) for setup issues
-- See [FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md) for deployment
-- See [PRODUCTION_DEPLOYMENT.md](apps/saas-001-booking/PRODUCTION_DEPLOYMENT.md) for production issues
-
-### Common Issues
-- **"Can't login after signup?"** → Check Supabase project is active
-- **"Stripe checkout not working?"** → Check API keys are correct
-- **"Email not sending?"** → Check Resend domain is verified
-- **"Deployment stuck?"** → Check GitHub Actions logs
-
-### Get More Help
-1. Check error logs (Coolify → Logs tab)
-2. Check GitHub Actions output (GitHub → Actions)
-3. Check Supabase logs
-4. Check Stripe webhook events
-5. Search documentation
-
----
-
-## 📈 What's Next?
-
-### Add More Features
-1. Booking calendar in dashboard
-2. Admin panel for business management
-3. Email notifications for bookings
-4. SMS notifications (Twilio)
-5. Analytics dashboard
-6. Custom branding
-
-### Scale Infrastructure
-1. Add Redis caching
-2. Database backups
-3. CDN for static assets
-4. Load balancer setup
-5. Database read replicas
-
-### Monetize
-1. Customer onboarding flow
-2. Feature gating based on plan
-3. Usage analytics
-4. Upgrade/downgrade flows
-5. Invoice management
-
----
-
-## 📄 License
-
-MIT - See LICENSE file
-
----
-
-## 🎉 Credits
-
-Built with ❤️ for SaaS founders who want to ship fast.
-
-Powered by:
-- [Next.js](https://nextjs.org)
-- [Supabase](https://supabase.com)
-- [Stripe](https://stripe.com)
-- [Resend](https://resend.com)
-- [Tailwind CSS](https://tailwindcss.com)
-
----
-
-## 🚀 Ready to Deploy?
-
-**Start here:** [FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md) ⭐
-
-**Questions?** Check the docs or open an issue.
-
-**Let's ship! 🚀**
+**Sretno s gradnjom vašeg sljedećeg velikog SaaS-a! 🚀🍌🧠🛡️🔥🌍**
