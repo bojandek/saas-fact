@@ -254,7 +254,7 @@ export class SkillStore {
       return (
         skill.name.toLowerCase().includes(queryLower) ||
         skill.description.toLowerCase().includes(queryLower) ||
-        skill.tags.some((tag) => tag.toLowerCase().includes(queryLower))
+        skill.tags.some((tag: string) => tag.toLowerCase().includes(queryLower))
       )
     })
 

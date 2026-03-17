@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/node": "^22.0.0"
   },
   "dependencies": {
     "@sentry/nextjs": "^7.108.0",

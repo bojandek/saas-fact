@@ -1,7 +1,7 @@
 {
-  "name": "@saas-factory/blocks-features",
+  "name": "@saas-factory/blocks-ratelimit",
   "version": "0.1.0",
-  "description": "Feature flags - gradual rollout, A/B testing, per-user targeting",
+  "description": "Rate limiting block using sliding window algorithm with Redis/in-memory support",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -16,9 +16,6 @@
     "vitest": "^1.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.38.4"
-  },
-  "peerDependencies": {
-    "react": "^18"
+    "@supabase/supabase-js": "^2.45.0"
   }
 }

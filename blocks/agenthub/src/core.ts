@@ -109,7 +109,7 @@ export class AgentHubCore {
     const workspace = await this.getWorkspace(workspaceId)
     if (!workspace) throw new Error(`Workspace ${workspaceId} not found`)
 
-    const agent = workspace.agents.find((a) => a.id === request.agentId)
+    const agent = workspace.agents.find((a: Agent) => a.id === request.agentId)
     if (!agent) throw new Error(`Agent ${request.agentId} not found`)
 
     const artifact: Artifact = {
@@ -156,7 +156,7 @@ export class AgentHubCore {
     newArtifact: Artifact
   ): Promise<Artifact[]> {
     return workspace.artifacts.filter(
-      (art) =>
+      (art: Artifact) =>
         art.type === newArtifact.type &&
         art.status === 'approved' &&
         art.agentRole !== newArtifact.agentRole // Different agent same type
@@ -203,7 +203,7 @@ export class AgentHubCore {
     const workspace = await this.getWorkspace(workspaceId)
     if (!workspace) throw new Error(`Workspace ${workspaceId} not found`)
 
-    const artifact = workspace.artifacts.find((a) => a.id === mergeRequest.artifactId)
+    const artifact = workspace.artifacts.find((a: Artifact) => a.id === mergeRequest.artifactId)
     if (!artifact) throw new Error(`Artifact ${mergeRequest.artifactId} not found`)
 
     // Check if there are conflicts
@@ -230,7 +230,7 @@ export class AgentHubCore {
    */
   private async resolveConflict(workspace: Workspace, artifact: Artifact): Promise<boolean> {
     const conflictingArtifacts = workspace.artifacts.filter(
-      (a) => a.type === artifact.type && a.status === 'approved' && a.id !== artifact.id
+      (a: Artifact) => a.type === artifact.type && a.status === 'approved' && a.id !== artifact.id
     )
 
     if (conflictingArtifacts.length === 0) return true
@@ -255,7 +255,7 @@ export class AgentHubCore {
           
           ${proposals
             .map(
-              (p) => `
+              (p: Artifact) => `
           Agent: ${p.agentRole}
           Title: ${p.title}
           Content: ${p.content.substring(0, 500)}...
@@ -300,8 +300,8 @@ export class AgentHubCore {
       successRate: 0.8,
       applicationContext: artifact.title,
       collaboratorIds: workspace.agents
-        .filter((a) => a.id !== artifact.agentId)
-        .map((a) => a.id),
+        .filter((a: Agent) => a.id !== artifact.agentId)
+        .map((a: Agent) => a.id),
       timestamp: new Date(),
     }
 

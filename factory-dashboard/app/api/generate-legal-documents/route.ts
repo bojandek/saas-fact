@@ -1,4 +1,5 @@
 /**
+import { applyRateLimit } from '../../../lib/rate-limit';
  * API Route for Legal & Terms Generation
  * Generates GDPR-compliant legal documents for new SaaS applications
  */

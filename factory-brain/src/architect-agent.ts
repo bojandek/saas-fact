@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { SqlGenerator } from './sql-generator';
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
+import { costTracker, extractOpenAIUsage } from './cost-tracker';
 
 interface ArchitectBlueprint {
   sqlSchema: string;
@@ -76,13 +77,19 @@ Architectural Context:\n${combinedContext}\n
 Provide only the YAML content, no additional text.`;
 
     const apiSpecResponse = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini", // Use a suitable model
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are an API architect AI that generates OpenAPI specifications." },
         { role: "user", content: apiSpecPrompt },
       ],
       temperature: 0.6,
       max_tokens: 1500,
+    });
+
+    costTracker.record({
+      agentName: 'ArchitectAgent:apiSpec',
+      model: 'gpt-4o-mini',
+      usage: extractOpenAIUsage(apiSpecResponse),
     });
 
     const apiSpec = apiSpecResponse.choices[0].message.content?.trim();

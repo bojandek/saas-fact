@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
+import { applyRateLimit } from '../../../lib/rate-limit';
 import { QaAgent } from '../../../../factory-brain/src/qa-agent';
 import { AgentContext } from '../../../../factory-brain/src/war-room-orchestrator';
 
 export async function POST(req: Request) {
+  // Rate limit: 10 AI generation requests per minute per IP
+  const limited = applyRateLimit(req, { limit: 10, window: 60 });
+  if (limited) return limited;
+
   try {
     const { saasDescription, appName, generatedTheme, generatedBlueprint, generatedLandingPage, generatedGrowthPlan, context } = await req.json();
 

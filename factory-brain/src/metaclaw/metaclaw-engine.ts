@@ -12,14 +12,16 @@ import {
   CrossoverEvent,
   ImprovementSuggestion,
 } from './types';
+import { simulateFitness, SimulationContext } from './simulation-environment';
 
 export class MetaClawEngine {
   private population: EvolutionPopulation;
   private generation: number = 0;
   private mutationRate: number = 0.15; // 15% chance per gene
   private eliteSize: number = 20; // Keep top 20 genomes
+  private simulationContext: SimulationContext;
 
-  constructor(initialPopulation: SaaSGenome[]) {
+  constructor(initialPopulation: SaaSGenome[], simulationContext?: SimulationContext) {
     this.population = {
       generation: 0,
       genomes: initialPopulation,
@@ -27,6 +29,12 @@ export class MetaClawEngine {
       averageFitness: 0,
       bestFitness: 0,
       diversity: 0,
+    };
+    this.simulationContext = simulationContext ?? {
+      marketSegment: 'b2b',
+      expectedMAU: 1000,
+      competitionLevel: 0.5,
+      budgetLevel: 0.5,
     };
   }
 
@@ -229,29 +237,14 @@ export class MetaClawEngine {
   }
 
   /**
-   * Evaluacija fitness za sve genome (placeholder)
+   * Evaluacija fitness za sve genome koristeći deterministički SimulationEnvironment.
+   * Zamjenjuje prethodni random placeholder sa realnim modelom koji uzima u obzir
+   * arhitekturu, feature set, monetizaciju i UX konfiguraciju svakog genoma.
    */
   private async evaluatePopulation(): Promise<void> {
     for (const genome of this.population.genomes) {
-      // Simulacija fitness evaluation
-      // U praksi, ovo bi izvanilo metriku sa svakog SaaS-a
-
-      genome.fitness = {
-        performance: 50 + Math.random() * 50,
-        userSatisfaction: 50 + Math.random() * 50,
-        costEfficiency: 40 + Math.random() * 60,
-        featureCompleteness: 60 + Math.random() * 40,
-        innovationIndex: 30 + Math.random() * 70,
-        overall: 0,
-      };
-
-      // Calculate weighted overall
-      genome.fitness.overall =
-        genome.fitness.performance * 0.3 +
-        genome.fitness.userSatisfaction * 0.25 +
-        genome.fitness.costEfficiency * 0.2 +
-        genome.fitness.featureCompleteness * 0.15 +
-        genome.fitness.innovationIndex * 0.1;
+      const { fitness } = simulateFitness(genome, this.simulationContext);
+      genome.fitness = fitness;
     }
   }
 
