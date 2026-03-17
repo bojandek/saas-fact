@@ -17,6 +17,7 @@
 
 import OpenAI from 'openai'
 import { logger } from './utils/logger'
+import { getMemoryOrchestrator } from './memory/memory-orchestrator'
 
 export interface AgentMessage {
   sender: string
@@ -261,6 +262,32 @@ export class WarRoomOrchestrator {
     await this.orchestrateSequential([pipelineAgents.deploy])
 
     this.log.info('Full SaaS generation pipeline completed')
+
+    // Automatically ingest the pipeline results into Always-On Memory
+    try {
+      const memory = getMemoryOrchestrator()
+      const projectId = this.context.appName
+      const summaryText = [
+        `SaaS Project: ${this.context.saasDescription}`,
+        this.context.blueprint
+          ? `Blueprint: ${JSON.stringify(this.context.blueprint).slice(0, 500)}`
+          : '',
+        this.context.growthPlan
+          ? `Growth Plan: ${JSON.stringify(this.context.growthPlan).slice(0, 300)}`
+          : '',
+        this.context.complianceChecks
+          ? `Compliance: ${JSON.stringify(this.context.complianceChecks).slice(0, 200)}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+
+      await memory.ingestAgentOutput('WarRoomOrchestrator', summaryText, projectId)
+      this.log.info({ projectId }, 'Pipeline results ingested into Always-On Memory')
+    } catch (err) {
+      // Non-fatal: memory ingest failure should not break the pipeline
+      this.log.warn({ err }, 'Failed to ingest pipeline results into memory (non-fatal)')
+    }
   }
 
   // ─── Legacy compatibility ───────────────────────────────────────────────────
