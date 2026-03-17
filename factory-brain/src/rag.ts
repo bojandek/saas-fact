@@ -5,6 +5,8 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { OpenCrawlAgent } from './opencrawl-agent';
+import fs from 'fs/promises';
+import path from 'path';
 
 interface Document {
   id: string
@@ -28,10 +30,32 @@ export class RAGSystem {
 
   constructor() {
     this.supabase = createClient(
-      process.env.SUPABASE_URL || '',
-      process.env.SUPABASE_ANON_KEY || ''
+      process.env.SUPABASE_URL || ";
+      process.env.SUPABASE_ANON_KEY || ""
     );
     this.openCrawlAgent = new OpenCrawlAgent();
+    this.loadLocalKnowledge(); // Load local knowledge on initialization
+  }
+
+  async loadLocalKnowledge(): Promise<void> {
+    const knowledgePath = path.join(process.cwd(), 'factory-brain', 'knowledge');
+    const files = await fs.readdir(knowledgePath);
+    const markdownFiles = files.filter(file => file.endsWith(".md"));
+
+    for (const file of markdownFiles) {
+      const filePath = path.join(knowledgePath, file);
+      const content = await fs.readFile(filePath, "utf-8");
+      // Assuming category is derived from filename or a default
+      const category = file.replace(".md", "").replace(/-/g, " ");
+      await this.storeDocument({
+        id: file,
+        title: file.replace(".md", ""),
+        content: content,
+        category: category,
+        created_at: new Date().toISOString(),
+      });
+    }
+    console.log(`Loaded ${markdownFiles.length} local knowledge documents.`);
   }
 
   /**

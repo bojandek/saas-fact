@@ -1,0 +1,19 @@
+{
+  "name": "@saas-factory/advanced-multi-tenant",
+  "version": "1.0.0",
+  "description": "Advanced Multi-Tenant Block for SaaS Factory - role-based access control and organization hierarchy",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

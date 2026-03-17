@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SocialMediaIntegration {
+  id               String   @id @default(cuid())
+  organizationId   String
+  platform         String   // 'twitter', 'linkedin', 'instagram', 'facebook', 'tiktok', 'youtube'
+  accessToken      String
+  refreshToken     String?
+  tokenExpiration  DateTime?
+  accountHandle    String
+  accountId        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  scheduledPosts   ScheduledPost[]
+
+  @@unique([organizationId, platform, accountId])
+  @@index([organizationId])
+  @@index([platform])
+}
+
+model ScheduledPost {
+  id              String   @id @default(cuid())
+  organizationId  String
+  integrationId   String
+  content         String
+  mediaIds        String[] // Array of media IDs
+  scheduledFor    DateTime
+  status          String   @default("scheduled") // 'draft', 'scheduled', 'posted', 'failed'
+  postedAt        DateTime?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  integration     SocialMediaIntegration @relation(fields: [integrationId], references: [id])
+
+  @@index([organizationId])
+  @@index([integrationId])
+  @@index([status])
+  @@index([scheduledFor])
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@saas-factory/social-media-integration",
+  "version": "1.0.0",
+  "description": "Social Media Integration Block for SaaS Factory - handles OAuth connections and post scheduling",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
