@@ -1,0 +1,146 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# factory-brain — Kubernetes Deployment (AI Agent Worker)
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: factory-brain
+  namespace: saas-factory
+  labels:
+    app: factory-brain
+    component: ai-worker
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: factory-brain
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: factory-brain
+        component: ai-worker
+    spec:
+      serviceAccountName: factory-brain-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      terminationGracePeriodSeconds: 120  # Allow long AI jobs to complete
+      containers:
+        - name: factory-brain
+          image: ghcr.io/bojandek/saas-fact/factory-brain:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+              name: http
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "4000"
+            - name: WORKER_CONCURRENCY
+              value: "3"  # Max concurrent AI pipelines per pod
+          envFrom:
+            - secretRef:
+                name: factory-brain-secrets
+            - configMapRef:
+                name: factory-brain-config
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi  # AI workloads are memory-intensive
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: knowledge-cache
+              mountPath: /app/knowledge-cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: knowledge-cache
+          emptyDir:
+            sizeLimit: 500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: factory-brain
+  namespace: saas-factory
+spec:
+  selector:
+    app: factory-brain
+  ports:
+    - port: 4000
+      targetPort: 4000
+      name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: factory-brain-sa
+  namespace: saas-factory
+automountServiceAccountToken: false
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: factory-brain-pdb
+  namespace: saas-factory
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: factory-brain
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: factory-brain-hpa
+  namespace: saas-factory
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: factory-brain
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60  # Scale earlier for AI workloads
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70

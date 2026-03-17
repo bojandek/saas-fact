@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: saas-factory
+
+bases:
+  - ../../base
+
+# Production: scale up replicas
+patches:
+  - target:
+      kind: Deployment
+      name: factory-dashboard
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: factory-brain
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+# Production image tags (set by CI/CD)
+images:
+  - name: ghcr.io/bojandek/saas-fact/factory-dashboard
+    newTag: "latest"
+  - name: ghcr.io/bojandek/saas-fact/factory-brain
+    newTag: "latest"
+
+commonLabels:
+  environment: production
