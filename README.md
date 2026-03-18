@@ -1,3 +1,35 @@
+# SaaS Factory 🏭
+
+Autonomni sistem za generisanje kompletnih SaaS aplikacija jednom komandom.
+
+---
+
+## ⚡ Brzi start — Setup Wizard
+
+**Linux / macOS:**
+```bash
+git clone https://github.com/bojandek/saas-fact
+cd saas-fact
+bash setup.sh
+```
+
+**Windows:**
+```
+git clone https://github.com/bojandek/saas-fact
+cd saas-fact
+setup.bat
+```
+
+Wizard automatski: instalira dependencies, pita za API ključeve, kreira `.env.local`, builda CLI.
+
+**Nakon setupа:**
+```bash
+./factory niche-list                                          # Lista niša
+./factory generate --niche "teretana-crm" --name moj-gym     # Generiši SaaS
+```
+
+---
+
 # SaaS Factory - Vrhunska Platforma za Gradnju SaaS Aplikacija
 
 Dobrodošli u **SaaS Factory** – vašu autonomnu tvornicu softvera koja pretvara ideje u produkcijski spremne SaaS aplikacije, koristeći najnovije AI tehnologije i najbolje prakse u industriji.
