@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
 import { logger } from './utils/logger'
+import { LANDING_PAGE_PROMPT } from './prompts/agent-prompts'
 
 interface LandingPageContent {
   hero: {
@@ -110,7 +111,7 @@ Ensure the content is engaging, benefit-oriented, and suitable for a SaaS landin
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini", // Use a suitable model
       messages: [
-        { role: "system", content: "You are a marketing expert AI that generates high-converting landing page content for SaaS products." },
+        { role: "system", content: LANDING_PAGE_PROMPT },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,

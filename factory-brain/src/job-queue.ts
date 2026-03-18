@@ -234,7 +234,12 @@ export class JobQueue {
       running: this.running.size,
       completed: this.completed.length,
       failed: this.failed.length,
-      avgWaitTimeMs: 0, // TODO: track wait times
+      avgWaitTimeMs: completedWithTime.length > 0
+        ? completedWithTime.reduce(
+            (sum, j) => sum + (j.startedAt!.getTime() - j.queuedAt.getTime()),
+            0
+          ) / completedWithTime.length
+        : 0,
       avgProcessingTimeMs: avgProcessingMs,
       throughputPerHour: recentCompleted.length,
     }
@@ -273,25 +278,43 @@ export class JobQueue {
     await this.persistJobStatus(job)
 
     try {
-      // Dynamically import to avoid circular dependencies
-      const { WarRoomOrchestrator } = await import('./war-room-orchestrator')
-      const orchestrator = new WarRoomOrchestrator({
-        saasDescription: job.payload.saasDescription,
+      // Use AutonomousGenerator — the real pipeline engine
+      const { AutonomousGenerator } = await import('./autonomous-generator.js')
+      const generator = new AutonomousGenerator()
+
+      log.info({ job_id: job.id }, 'Starting AutonomousGenerator pipeline')
+
+      const result = await generator.generate({
+        description: job.payload.saasDescription,
         appName: job.payload.appName,
+        orgId: job.payload.orgId,
+        skipDeploy: job.payload.options?.skipDeploy ?? false,
+        skipQA: job.payload.options?.skipQA ?? false,
+        onProgress: (event) => {
+          log.info(
+            { job_id: job.id, step: event.step, status: event.status, elapsed_ms: event.elapsedMs },
+            event.message
+          )
+          // Persist progress update so clients can poll it
+          job.result = { ...((job.result as Record<string, unknown>) ?? {}), lastStep: event }
+          this.persistJobStatus(job).catch(() => {})
+        },
       })
 
-      // Run the full pipeline
-      // In a real implementation, this would call orchestrator.runFullPipeline()
-      // with the actual agent tasks. For now, we simulate the structure.
-      log.info({ job_id: job.id }, 'Starting War Room pipeline')
-
-      // Simulate pipeline execution (replace with actual orchestrator call)
-      await new Promise(resolve => setTimeout(resolve, 100))
+      if (!result.success) {
+        throw new Error(result.error ?? 'AutonomousGenerator returned failure')
+      }
 
       job.status = 'completed'
       job.completedAt = new Date()
       job.result = {
-        appName: job.payload.appName,
+        appName: result.appName,
+        appPath: result.appPath,
+        niche: result.niche,
+        deployUrl: result.deployUrl,
+        totalCostUsd: result.totalCostUsd,
+        totalDurationMs: result.totalDurationMs,
+        stepsCompleted: result.steps.filter(s => s.status === 'completed').length,
         completedAt: job.completedAt.toISOString(),
         durationMs: job.completedAt.getTime() - job.startedAt!.getTime(),
       }

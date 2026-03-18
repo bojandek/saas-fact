@@ -1,7 +1,14 @@
 /**
  * Legal & Terms Generator
  * Automatically generates GDPR-compliant Terms of Service, Privacy Policy, and other legal documents
+ *
+ * System prompt: LEGAL_AGENT_PROMPT from './prompts/agent-prompts'
+ * Note: This generator uses static template generation (no LLM call).
+ * For AI-enhanced documents, use the LEGAL_AGENT_PROMPT as system prompt
+ * when calling OpenAI with a custom config as user message.
  */
+import { LEGAL_AGENT_PROMPT } from './prompts/agent-prompts'
+export { LEGAL_AGENT_PROMPT }
 
 interface LegalDocumentConfig {
   companyName: string;

@@ -1,0 +1,30 @@
+{
+  "name": "@saas-factory/blocks-notifications",
+  "version": "0.0.1",
+  "description": "Notifications block — in-app, email, push, and SMS notifications",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "vite build --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "@saas-factory/core": "workspace:*",
+    "@saas-factory/db": "workspace:*",
+    "@saas-factory/ui": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "react": "^18",
+    "next": "^15"
+  }
+}

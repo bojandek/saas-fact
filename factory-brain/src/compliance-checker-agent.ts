@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { RAGSystem } from './rag';
 import { logger } from './utils/logger'
+import { COMPLIANCE_AGENT_PROMPT } from './prompts/agent-prompts'
 
 interface ComplianceCheckResult {
   category: string;
@@ -58,7 +59,7 @@ Provide the output as a JSON array of objects with the following structure:
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are an AI Compliance and Best Practice Checker for SaaS applications. You provide actionable feedback based on industry best practices." },
+        { role: "system", content: COMPLIANCE_AGENT_PROMPT },
         { role: "user", content: prompt },
       ],
       temperature: 0.5,

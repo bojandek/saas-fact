@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
 import { logger } from './utils/logger'
+import { GROWTH_HACKER_PROMPT } from './prompts/agent-prompts'
 
 interface GrowthPlan {
   seo: {
@@ -89,7 +90,7 @@ Ensure the content is engaging, relevant, and optimized for growth.`;
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini", // Use a suitable model
       messages: [
-        { role: "system", content: "You are an AI Growth Hacker that generates effective marketing strategies for SaaS products." },
+        { role: "system", content: GROWTH_HACKER_PROMPT },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,
