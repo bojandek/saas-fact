@@ -1,0 +1,30 @@
+{
+  "name": "test-gym5",
+  "niche": "teretana-crm",
+  "category": "fitness-wellness",
+  "blocks": [
+    "auth",
+    "payments",
+    "calendar",
+    "notifications",
+    "analytics",
+    "advanced-multi-tenant"
+  ],
+  "coreFeatures": [
+    "Member management with subscription tracking",
+    "Class scheduling and booking",
+    "Attendance tracking with QR codes",
+    "Trainer assignment and management",
+    "Monthly billing and payment history",
+    "Progress tracking and body measurements",
+    "Push notifications for class reminders"
+  ],
+  "suggestedAppName": "TeretanaCrmApp",
+  "suggestedTagline": "Manage your fitness business with ease",
+  "pricingModel": "subscription",
+  "targetPersona": "Gym owner managing 50-500 members",
+  "estimatedComplexity": "medium",
+  "generatedAt": "2026-03-18T13:33:09.510Z",
+  "generatedBy": "factory-cli",
+  "version": "1.0.0"
+}

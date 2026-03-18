@@ -89,11 +89,12 @@ class RAGSystem {
         const missingIndices = results.map((r, i) => (r === null ? i : -1)).filter((i) => i !== -1);
         if (missingIndices.length > 0) {
             const missingTexts = missingIndices.map((i) => truncated[i]);
-            const result = await (0, embeddings_1.createEmbedding)(text, embeddings_1.EMBEDDING_MODELS.VOYAGE);
-            response.data.forEach((item, batchIdx) => {
+            // Voyage AI processes texts individually — batch via Promise.all
+            const embeddings = await Promise.all(missingTexts.map((t) => (0, embeddings_1.createEmbedding)(t, embeddings_1.EMBEDDING_MODELS.VOYAGE).then((r) => r.embedding)));
+            embeddings.forEach((embedding, batchIdx) => {
                 const originalIdx = missingIndices[batchIdx];
-                results[originalIdx] = item.embedding;
-                this.embeddingCache.set(truncated[originalIdx], item.embedding);
+                results[originalIdx] = embedding;
+                this.embeddingCache.set(truncated[originalIdx], embedding);
             });
         }
         return results;

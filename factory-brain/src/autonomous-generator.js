@@ -119,16 +119,116 @@ class AutonomousGenerator {
             try {
                 warRoomResult = await this.runStep('war-room', opts, async () => {
                     const { WarRoomOrchestrator } = await Promise.resolve().then(() => __importStar(require('./war-room-orchestrator.js')));
-                    const orchestrator = new WarRoomOrchestrator();
-                    return orchestrator.runFullPipeline({
-                        description,
+                    const { GrowthHackerAgent } = await Promise.resolve().then(() => __importStar(require('./growth-hacker-agent.js')));
+                    const { ComplianceCheckerAgent } = await Promise.resolve().then(() => __importStar(require('./compliance-checker-agent.js')));
+                    const { QaAgent } = await Promise.resolve().then(() => __importStar(require('./qa-agent.js')));
+                    const { LegalTermsGenerator } = await Promise.resolve().then(() => __importStar(require('./legal-terms-generator.js')));
+                    // Build AgentContext from available data
+                    const context = {
+                        saasDescription: description,
                         appName: opts.appName,
-                        orgId: opts.orgId || 'cli-default',
                         blueprint: architectResult,
-                        skipQA: opts.skipQA,
+                    };
+                    const orchestrator = new WarRoomOrchestrator(context);
+                    // Create AgentTask objects for each pipeline stage
+                    const growthAgent = new GrowthHackerAgent();
+                    const complianceAgent = new ComplianceCheckerAgent();
+                    const qaAgent = new QaAgent();
+                    const legalAgent = new LegalTermsGenerator();
+                    const growthPlan = {};
+                    const complianceResult = {};
+                    const qaResult = {};
+                    const legalResult = {};
+                    await orchestrator.runFullPipeline({
+                        theme: {
+                            name: 'theme',
+                            run: async () => {
+                                orchestrator.updateContext({ theme: { primaryColor: '#6366f1', style: 'modern' } });
+                                return { primaryColor: '#6366f1', style: 'modern' };
+                            },
+                        },
+                        blueprint: {
+                            name: 'blueprint',
+                            run: async () => {
+                                orchestrator.updateContext({ blueprint: architectResult });
+                                return architectResult;
+                            },
+                        },
+                        landingPage: {
+                            name: 'landing-page',
+                            run: async () => {
+                                return { headline: blueprint.suggestedTagline, sections: [] };
+                            },
+                        },
+                        growthPlan: {
+                            name: 'growth-plan',
+                            run: async () => {
+                                const result = await growthAgent.generateGrowthPlan(description);
+                                Object.assign(growthPlan, result);
+                                orchestrator.updateContext({ growthPlan: result });
+                                return result;
+                            },
+                        },
+                        compliance: {
+                            name: 'compliance',
+                            run: async () => {
+                                const result = await complianceAgent.checkCompliance(description, null, // theme
+                                architectResult, // blueprint
+                                null, // landingPage
+                                growthPlan);
+                                Object.assign(complianceResult, { checks: result });
+                                orchestrator.updateContext({ complianceChecks: result });
+                                return result;
+                            },
+                        },
+                        qaTests: {
+                            name: 'qa-tests',
+                            run: async () => {
+                                if (opts.skipQA)
+                                    return { skipped: true };
+                                const ctx = orchestrator.getContext();
+                                const result = await qaAgent.generateTests({
+                                    saasDescription: description,
+                                    appName: opts.appName,
+                                    generatedTheme: ctx.theme,
+                                    generatedBlueprint: architectResult,
+                                    generatedLandingPage: ctx.landingPage,
+                                    generatedGrowthPlan: growthPlan,
+                                    context: ctx,
+                                });
+                                Object.assign(qaResult, result);
+                                orchestrator.updateContext({ qaResults: result });
+                                return result;
+                            },
+                        },
+                        legalDocs: {
+                            name: 'legal-docs',
+                            run: async () => {
+                                const result = LegalTermsGenerator.generateTermsOfService({
+                                    companyName: opts.appName,
+                                    companyEmail: 'legal@example.com',
+                                    companyAddress: 'To be updated',
+                                    appName: blueprint.suggestedAppName,
+                                    appDescription: description,
+                                    dataProcessing: ['user_emails', 'usage_analytics'],
+                                    thirdPartyServices: blueprint.blocks.includes('payments') ? ['stripe'] : [],
+                                    jurisdiction: 'EU',
+                                });
+                                Object.assign(legalResult, result);
+                                orchestrator.updateContext({ legalDocs: result });
+                                return result;
+                            },
+                        },
+                        deploy: {
+                            name: 'deploy-prep',
+                            run: async () => {
+                                return { ready: true };
+                            },
+                        },
                     });
+                    return { growthPlan, complianceResult, qaResult, legalResult, agentsRun: 4 };
                 });
-                this.emit(opts, 'war-room', 'completed', `War Room complete: ${warRoomResult.agentsRun || 5} agents finished`);
+                this.emit(opts, 'war-room', 'completed', `War Room complete: ${warRoomResult.agentsRun || 4} agents finished`);
             }
             catch (err) {
                 this.log.warn({ err }, 'WarRoom failed, continuing with assembly');
@@ -168,12 +268,20 @@ class AutonomousGenerator {
                 await this.runStep('learning', opts, async () => {
                     const { AutonomousLearningLoop } = await Promise.resolve().then(() => __importStar(require('./autonomous-learning-loop.js')));
                     const loop = new AutonomousLearningLoop();
-                    await loop.recordGeneration({
-                        appName: opts.appName,
-                        niche: blueprint.niche,
-                        blocks: blueprint.blocks,
-                        success: true,
-                        durationMs: Date.now() - this.startTime,
+                    await loop.initialize();
+                    await loop.recordOutcome({
+                        generation_id: `gen-${opts.appName}-${Date.now()}`,
+                        saas_description: opts.description || opts.niche || opts.appName,
+                        timestamp: new Date().toISOString(),
+                        assembler_success: true,
+                        deploy_success: false,
+                        agent_errors: [],
+                        blocks_used: blueprint.blocks,
+                        sql_tables_count: blueprint.databaseTables.length,
+                        components_generated: 0,
+                        generation_time_ms: Date.now() - this.startTime,
+                        typescript_errors: 0,
+                        missing_blocks: [],
                     });
                 });
                 this.emit(opts, 'learning', 'completed', 'Generation stored in memory for future learning');
@@ -181,7 +289,7 @@ class AutonomousGenerator {
             catch {
                 // Learning failure is always non-fatal
             }
-            const totalCostUsd = cost_tracker_js_1.costTracker.getSessionCost(sessionId);
+            const totalCostUsd = cost_tracker_js_1.costTracker.getSummary().totalCostUSD;
             const totalDurationMs = Date.now() - this.startTime;
             this.log.info({ appName: opts.appName, totalDurationMs, totalCostUsd }, 'Generation complete');
             return {

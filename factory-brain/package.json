@@ -5,12 +5,13 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "bash build.sh",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint . --ext ts",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:tsc": "tsc --noEmit false --outDir dist --module commonjs --moduleResolution node --target ES2020 --esModuleInterop true --skipLibCheck true --strict false --noEmitOnError false"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

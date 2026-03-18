@@ -1,0 +1,32 @@
+{
+  "name": "@saas-factory/test-gym4",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "supabase db push"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "@supabase/ssr": "^0.0.10",
+    "@saas-factory/shared-types": "workspace:*",
+    "@saas-factory/block-auth": "workspace:*",
+    "@saas-factory/block-payments": "workspace:*",
+    "@saas-factory/block-calendar": "workspace:*",
+    "@saas-factory/block-notifications": "workspace:*",
+    "@saas-factory/block-analytics": "workspace:*",
+    "@saas-factory/block-advanced-multi-tenant": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^18.0.0",
+    "@types/node": "^20.0.0",
+    "tailwindcss": "^3.0.0"
+  }
+}
