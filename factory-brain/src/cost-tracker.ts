@@ -1,15 +1,19 @@
-/**
 import { logger } from './utils/logger'
+
+/**
  * Cost Tracker - AI API Usage & Cost Monitoring
  *
- * Intercepts all OpenAI and Anthropic API calls to track token usage
- * and calculate costs per project, per tenant, and per agent.
+ * Tracks token usage and calculates costs for all AI API calls.
+ * Primary provider: Anthropic Claude
+ * Embeddings: Voyage AI
+ * Audio transcription: OpenAI Whisper (fallback)
  *
  * Pricing (as of 2025):
- *   - GPT-4o-mini:         $0.15 / 1M input tokens,  $0.60 / 1M output tokens
- *   - GPT-4o:              $2.50 / 1M input tokens,  $10.00 / 1M output tokens
- *   - Claude 3.5 Sonnet:   $3.00 / 1M input tokens,  $15.00 / 1M output tokens
- *   - Claude 3 Haiku:      $0.25 / 1M input tokens,  $1.25 / 1M output tokens
+ *   - claude-haiku-4-5:    $0.80 / 1M input,  $4.00 / 1M output
+ *   - claude-sonnet-4-5:   $3.00 / 1M input,  $15.00 / 1M output
+ *   - claude-opus-4-5:     $15.00 / 1M input, $75.00 / 1M output
+ *   - voyage-3:            $0.06 / 1M tokens
+ *   - whisper-1:           $0.006 / minute (approximated as input tokens)
  */
 
 export interface ModelPricing {
@@ -18,20 +22,30 @@ export interface ModelPricing {
 }
 
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  'gpt-4o-mini':                { inputPer1M: 0.15,  outputPer1M: 0.60  },
-  'gpt-4o':                     { inputPer1M: 2.50,  outputPer1M: 10.00 },
-  'gpt-4.1-mini':               { inputPer1M: 0.40,  outputPer1M: 1.60  },
-  'gpt-4.1':                    { inputPer1M: 2.00,  outputPer1M: 8.00  },
+  // ── Claude 4.x (primary models) ──────────────────────────────────────────
+  'claude-haiku-4-5':           { inputPer1M: 0.80,  outputPer1M: 4.00  },
+  'claude-sonnet-4-5':          { inputPer1M: 3.00,  outputPer1M: 15.00 },
+  'claude-opus-4-5':            { inputPer1M: 15.00, outputPer1M: 75.00 },
+  // ── Claude 3.x (legacy aliases) ──────────────────────────────────────────
   'claude-3-5-sonnet-20241022': { inputPer1M: 3.00,  outputPer1M: 15.00 },
   'claude-3-haiku-20240307':    { inputPer1M: 0.25,  outputPer1M: 1.25  },
   'claude-3-opus-20240229':     { inputPer1M: 15.00, outputPer1M: 75.00 },
-  'gemini-2.5-flash':           { inputPer1M: 0.075, outputPer1M: 0.30  },
+  // ── Voyage AI (embeddings) ────────────────────────────────────────────────
+  'voyage-3':                   { inputPer1M: 0.06,  outputPer1M: 0.00  },
+  'voyage-3-large':             { inputPer1M: 0.12,  outputPer1M: 0.00  },
+  'voyage-3-lite':              { inputPer1M: 0.02,  outputPer1M: 0.00  },
+  'voyage-code-3':              { inputPer1M: 0.06,  outputPer1M: 0.00  },
+  // ── OpenAI (Whisper audio transcription only) ─────────────────────────────
+  'whisper-1':                  { inputPer1M: 0.006, outputPer1M: 0.00  },
 }
 
 export interface TokenUsage {
   inputTokens: number
   outputTokens: number
   totalTokens: number
+  // Legacy aliases for compatibility
+  promptTokens?: number
+  completionTokens?: number
 }
 
 export interface CostRecord {
@@ -64,8 +78,11 @@ export function calculateCost(model: string, usage: TokenUsage): number {
     logger.warn(`[CostTracker] Unknown model: ${model}. Cost calculation skipped.`)
     return 0
   }
-  const inputCost = (usage.inputTokens / 1_000_000) * pricing.inputPer1M
-  const outputCost = (usage.outputTokens / 1_000_000) * pricing.outputPer1M
+  // Support both inputTokens and legacy promptTokens
+  const inputTokens = usage.inputTokens ?? usage.promptTokens ?? 0
+  const outputTokens = usage.outputTokens ?? usage.completionTokens ?? 0
+  const inputCost = (inputTokens / 1_000_000) * pricing.inputPer1M
+  const outputCost = (outputTokens / 1_000_000) * pricing.outputPer1M
   return inputCost + outputCost
 }
 
@@ -95,7 +112,17 @@ export class CostTracker {
     projectId?: string
     tenantId?: string
   }): CostRecord {
-    const costUSD = calculateCost(params.model, params.usage)
+    // Normalize usage — support both inputTokens and promptTokens
+    const normalizedUsage: TokenUsage = {
+      inputTokens: params.usage.inputTokens ?? params.usage.promptTokens ?? 0,
+      outputTokens: params.usage.outputTokens ?? params.usage.completionTokens ?? 0,
+      totalTokens: params.usage.totalTokens ?? 0,
+    }
+    if (!normalizedUsage.totalTokens) {
+      normalizedUsage.totalTokens = normalizedUsage.inputTokens + normalizedUsage.outputTokens
+    }
+
+    const costUSD = calculateCost(params.model, normalizedUsage)
 
     const record: CostRecord = {
       id: `cost-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -104,7 +131,7 @@ export class CostTracker {
       tenantId: params.tenantId,
       agentName: params.agentName,
       model: params.model,
-      usage: params.usage,
+      usage: normalizedUsage,
       costUSD,
     }
 
@@ -113,7 +140,7 @@ export class CostTracker {
     if (process.env.NODE_ENV !== 'test') {
       logger.info(
         `[CostTracker] ${params.agentName} | ${params.model} | ` +
-        `${params.usage.totalTokens} tokens | $${costUSD.toFixed(6)}`
+        `${normalizedUsage.totalTokens} tokens | $${costUSD.toFixed(6)}`
       )
     }
 
@@ -200,23 +227,8 @@ export class CostTracker {
 }
 
 /**
- * Convenience wrapper: extract token usage from OpenAI response
- */
-export function extractOpenAIUsage(response: {
-  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
-}): TokenUsage {
-  const usage = response.usage || {}
-  const inputTokens = usage.prompt_tokens || 0
-  const outputTokens = usage.completion_tokens || 0
-  return {
-    inputTokens,
-    outputTokens,
-    totalTokens: usage.total_tokens || inputTokens + outputTokens,
-  }
-}
-
-/**
- * Convenience wrapper: extract token usage from Anthropic response
+ * Convenience wrapper: extract token usage from Anthropic Claude response
+ * (primary usage extractor)
  */
 export function extractAnthropicUsage(response: {
   usage?: { input_tokens?: number; output_tokens?: number }
@@ -228,6 +240,23 @@ export function extractAnthropicUsage(response: {
     inputTokens,
     outputTokens,
     totalTokens: inputTokens + outputTokens,
+  }
+}
+
+/**
+ * Convenience wrapper: extract token usage from OpenAI response
+ * (kept for Whisper compatibility)
+ */
+export function extractOpenAIUsage(response: {
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
+}): TokenUsage {
+  const usage = response.usage || {}
+  const inputTokens = usage.prompt_tokens || 0
+  const outputTokens = usage.completion_tokens || 0
+  return {
+    inputTokens,
+    outputTokens,
+    totalTokens: usage.total_tokens || inputTokens + outputTokens,
   }
 }
 

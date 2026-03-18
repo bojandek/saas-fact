@@ -63,8 +63,8 @@ export class AIChat {
 
     // Simulate OpenAI API call and streaming response
     // In a real scenario, you would use the OpenAI SDK here:
-    // const openai = new OpenAI({ apiKey: this.apiKey });
-    // const stream = await openai.chat.completions.create({
+    const llm = getLLMClient()
+    // const stream = await llm.chat({
     //   model: 'gpt-4o-mini',
     //   messages: this.history,
     //   stream: true,

@@ -15,7 +15,7 @@
  *                                           → [deploy]
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { logger } from './utils/logger'
 import { getMemoryOrchestrator } from './memory/memory-orchestrator'
 import { getLearningLoop, type GenerationOutcome } from './autonomous-learning-loop'
@@ -55,13 +55,13 @@ export interface ParallelResult<T> {
 }
 
 export class WarRoomOrchestrator {
-  private openai: OpenAI
+  private llm = getLLMClient()
   private messageLog: AgentMessage[] = []
   private context: AgentContext
   private log = logger.child({ component: 'WarRoomOrchestrator' })
 
   constructor(initialContext: AgentContext) {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    this.llm = getLLMClient()
     this.context = initialContext
   }
 

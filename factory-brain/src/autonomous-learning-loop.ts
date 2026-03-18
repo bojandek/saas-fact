@@ -13,7 +13,7 @@
  *  learned patterns don't affect the next generation."
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { z } from 'zod'
 import { logger } from './utils/logger'
 import { withRetry } from './utils/retry'
@@ -88,7 +88,7 @@ export type AgentKnowledgeUpdate = z.infer<typeof AgentKnowledgeUpdateSchema>
 // ── Autonomous Learning Loop ──────────────────────────────────────────────────
 
 export class AutonomousLearningLoop {
-  private openai: OpenAI
+  private llm = getLLMClient()
   private patternsPath: string
   private knowledgePath: string
   private outcomesPath: string
@@ -96,7 +96,7 @@ export class AutonomousLearningLoop {
   private isRunning = false
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    this.llm = getLLMClient()
     const baseDir = path.join(process.cwd(), 'factory-brain', 'knowledge')
     this.patternsPath = path.join(baseDir, 'learned-patterns.json')
     this.knowledgePath = path.join(baseDir, 'agent-knowledge-updates.json')
@@ -187,17 +187,15 @@ If no meaningful patterns can be extracted, return [].
 JSON only, no markdown.`
 
     try {
-      const response = await withRetry(
-        () => this.openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
+      const parsed = await withRetry(
+        () => this.llm.completeJSON({
+          prompt,
+          model: CLAUDE_MODELS.HAIKU,
+          maxTokens: 800,
         }),
         { maxAttempts: 3, baseDelayMs: 500 }
       )
 
-      const parsed = JSON.parse(response.choices[0].message.content ?? '[]')
       const rawPatterns: Array<{
         pattern_type: LearnedPattern['pattern_type']
         description: string

@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { getLLMClient, CLAUDE_MODELS } from '../../../../factory-brain/src/llm/client'
 import { RAGSystem } from '../../../../factory-brain/src/rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from '../../../../factory-brain/src/war-room-orchestrator';
 
@@ -12,14 +12,12 @@ interface GeneratedTheme {
 }
 
 export class ThemeGenerator {
-  private openai: OpenAI;
+  private llm = getLLMClient();
   private ragSystem: RAGSystem;
   private orchestrator?: WarRoomOrchestrator;
 
   constructor(orchestrator?: WarRoomOrchestrator) {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.llm = getLLMClient()
     this.ragSystem = new RAGSystem();
     this.orchestrator = orchestrator;
   }
@@ -65,8 +63,8 @@ Provide the output as a JSON object with the following structure:
 
 Ensure the colors are harmonious and suitable for the SaaS type.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini", // Use a suitable model
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.HAIKU, // Use a suitable model
       messages: [
         { role: "system", content: "You are a UI/UX designer AI that generates modern and harmonious themes for SaaS applications, adhering to best practices." },
         { role: "user", content: prompt },

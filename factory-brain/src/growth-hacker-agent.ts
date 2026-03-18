@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { RAGSystem } from './rag';
 import { WarRoomOrchestrator, AgentMessage, AgentContext } from './war-room-orchestrator';
 import { logger } from './utils/logger'
@@ -22,14 +22,12 @@ interface GrowthPlan {
 }
 
 export class GrowthHackerAgent {
-  private openai: OpenAI;
+  private llm = getLLMClient();
   private ragSystem: RAGSystem;
   private orchestrator?: WarRoomOrchestrator;
 
   constructor(orchestrator?: WarRoomOrchestrator) {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.llm = getLLMClient();
     this.ragSystem = new RAGSystem();
     this.orchestrator = orchestrator;
   }
@@ -87,8 +85,8 @@ Provide the output as a JSON object with the following structure:
 
 Ensure the content is engaging, relevant, and optimized for growth.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini", // Use a suitable model
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.HAIKU, // Use a suitable model
       messages: [
         { role: "system", content: GROWTH_HACKER_PROMPT },
         { role: "user", content: prompt },
@@ -98,7 +96,7 @@ Ensure the content is engaging, relevant, and optimized for growth.`;
       response_format: { type: "json_object" },
     });
 
-    const planJson = response.choices[0].message.content;
+    const planJson = response.content;
     if (!planJson) {
       if (this.orchestrator) {
         await this.orchestrator.sendMessage({

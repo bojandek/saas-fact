@@ -80,7 +80,7 @@ export function isRetryableError(error: unknown, retryableStatusCodes: number[])
  * @example
  * ```typescript
  * const result = await withRetry(
- *   () => openai.chat.completions.create({ ... }),
+ *   () => llm.chat({ ... }),
  *   { maxAttempts: 4, onRetry: (attempt, err) => logger.warn({ attempt, err }, 'Retrying') }
  * )
  * ```

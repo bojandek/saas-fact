@@ -1,4 +1,4 @@
-import { OpenAI } from 'openai';
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { AgentContext, AgentMessage } from './war-room-orchestrator';
 import { QA_AGENT_PROMPT } from './prompts/agent-prompts';
 
@@ -72,12 +72,12 @@ interface GeneratedTests {
 }
 
 export class QaAgent {
-  private openai: OpenAI;
+  private llm = getLLMClient();
   private warRoomMessages: AgentMessage[] = [];
   private currentContext: AgentContext;
 
   constructor(context: AgentContext | null = null) {
-    this.openai = new OpenAI();
+    this.llm = getLLMClient()
     this.currentContext = context || { history: [] };
   }
 
@@ -121,8 +121,8 @@ export class QaAgent {
     `;
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4.1-mini', // Using a capable model for code generation
+      const response = await this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU, // Using a capable model for code generation
         messages: [
           { role: 'system', content: QA_AGENT_PROMPT + '\n\nYou are an expert QA Engineer generating Playwright tests.' },
           { role: 'user', content: prompt },

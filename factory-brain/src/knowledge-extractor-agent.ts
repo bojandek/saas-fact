@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { RAGSystem } from './rag';
 import { logger } from './utils/logger'
 
@@ -9,13 +9,11 @@ interface ExtractedKnowledge {
 }
 
 export class KnowledgeExtractorAgent {
-  private openai: OpenAI;
+  private llm = getLLMClient();
   private ragSystem: RAGSystem;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.llm = getLLMClient();
     this.ragSystem = new RAGSystem();
   }
 
@@ -68,8 +66,8 @@ export class KnowledgeExtractorAgent {
 
     Provide the summary in Markdown format.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: "system", content: "You are an AI assistant that summarizes and extracts best practices from SaaS application generation processes." },
         { role: "user", content: summaryPrompt },
@@ -78,7 +76,7 @@ export class KnowledgeExtractorAgent {
       max_tokens: 500,
     });
 
-    const summarizedContent = response.choices[0].message.content?.trim();
+    const summarizedContent = response.content?.trim();
 
     if (summarizedContent) {
       await this.ragSystem.storeDocument({

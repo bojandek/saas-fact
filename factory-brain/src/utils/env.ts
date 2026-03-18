@@ -8,7 +8,7 @@
  *
  * Usage:
  *   import { env } from './utils/env'
- *   const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
+ *   const llm = getLLMClient() // uses ANTHROPIC_API_KEY
  */
 
 import { z } from 'zod'

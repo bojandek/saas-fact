@@ -9,7 +9,7 @@
  * "Sarah Chen, 34, Product Manager at a fintech startup, early adopter, price-sensitive"
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../../../factory-brain/src/llm/client'
 import { z } from 'zod'
 import { logger } from '../../factory-brain/src/utils/logger'
 import { withRetry } from '../../factory-brain/src/utils/retry'
@@ -89,9 +89,7 @@ const ADOPTION_DISTRIBUTION = {
 
 // ── OpenAI Client ─────────────────────────────────────────────────────────────
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-}
+const llm = getLLMClient()
 
 // ── Core Generation ───────────────────────────────────────────────────────────
 
@@ -102,7 +100,7 @@ async function generatePersonaBatch(
   count: number,
   adoptionStyles: string[]
 ): Promise<Persona[]> {
-  const openai = getOpenAI()
+  
 
   const systemPrompt = `You are a UX researcher and market analyst specializing in SaaS products.
 Generate ${count} realistic user personas for the given SaaS product.
@@ -151,8 +149,8 @@ Adoption distribution to follow: ${JSON.stringify(
 Generate ${count} diverse, realistic personas.`
 
   const response = await withRetry(
-    () => openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    () => llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -243,10 +241,10 @@ export async function generatePersonas(
 
     // Extract market analysis from first batch
     if (i === 0) {
-      const openai = getOpenAI()
+      
       const analysisResponse = await withRetry(
-        () => openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+        () => llm.chat({
+          model: CLAUDE_MODELS.HAIKU,
           messages: [{
             role: 'user',
             content: `For this SaaS: "${saasDescription}" targeting "${targetMarket}" at "${pricePoint}", provide:
@@ -290,7 +288,7 @@ export function personaToAgentConfig(persona: Persona) {
   return {
     agentId: persona.id,
     role: mapAdoptionToRole(persona.adoption_style),
-    modelVersion: 'gpt-4o-mini',
+    modelVersion: CLAUDE_MODELS.HAIKU,
     temperatureParam: 0.5 + persona.tech_savviness * 0.5,
     confidenceThreshold: 0.6 + persona.tech_savviness * 0.3,
     specialization: persona.feature_priorities,

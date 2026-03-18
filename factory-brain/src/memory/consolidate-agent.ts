@@ -10,7 +10,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../llm/client'
+import { createEmbedding, EMBEDDING_MODELS } from '../llm/embeddings'
 import { logger } from '../utils/logger'
 import { withRetry } from '../utils/retry'
 import type {
@@ -31,8 +32,8 @@ function getSupabase() {
   return createClient(url, key)
 }
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const llm = getLLMClient()
+)
 }
 
 // ── Database Operations ───────────────────────────────────────────────────────
@@ -52,13 +53,13 @@ async function readUnconsolidatedMemories(limit = 10): Promise<Memory[]> {
 
 async function storeConsolidation(input: ConsolidationInput): Promise<StoredConsolidation> {
   const supabase = getSupabase()
-  const openai = getOpenAI()
+  
 
   // Generate embedding for the insight
   const embeddingText = `${input.summary} ${input.insight}`
   const embeddingResponse = await withRetry(
-    () => openai.embeddings.create({
-      model: 'text-embedding-3-small',
+    () => createEmbedding({
+      model: EMBEDDING_MODELS.VOYAGE,
       input: embeddingText.slice(0, 8000),
     }),
     { maxAttempts: 3, baseDelayMs: 1000 }
@@ -125,7 +126,7 @@ async function storeConsolidation(input: ConsolidationInput): Promise<StoredCons
  * Uses GPT-4o to find patterns and connections across memories.
  */
 async function analyzeMemories(memories: Memory[]): Promise<ConsolidationInput> {
-  const openai = getOpenAI()
+  
 
   const memorySummaries = memories
     .map(m => `[Memory #${m.id}] Source: ${m.source} | Topics: ${m.topics.join(', ')} | Importance: ${m.importance}\nSummary: ${m.summary}`)
@@ -152,8 +153,8 @@ Focus on:
 Return valid JSON only, no markdown.`
 
   const response = await withRetry(
-    () => openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    () => llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Analyze these ${memories.length} memories:\n\n${memorySummaries}` },

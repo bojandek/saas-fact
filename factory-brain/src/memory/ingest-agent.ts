@@ -15,7 +15,8 @@ import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../llm/client'
+import { createEmbedding, EMBEDDING_MODELS } from '../llm/embeddings'
 import { logger } from '../utils/logger'
 import { withRetry } from '../utils/retry'
 import type {
@@ -41,8 +42,8 @@ function getSupabase() {
   return createClient(url, key)
 }
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const llm = getLLMClient()
+)
 }
 
 // ── Embedding ─────────────────────────────────────────────────────────────────
@@ -53,9 +54,9 @@ async function generateEmbedding(text: string): Promise<number[]> {
   const cacheKey = crypto.createHash('md5').update(text.slice(0, 500)).digest('hex')
   if (embeddingCache.has(cacheKey)) return embeddingCache.get(cacheKey)!
 
-  const openai = getOpenAI()
+  
   const response = await withRetry(
-    () => openai.embeddings.create({ model: 'text-embedding-3-small', input: text.slice(0, 8000) }),
+    () => createEmbedding(text.slice(0, 8000) , EMBEDDING_MODELS.VOYAGE),
     { maxAttempts: 3, baseDelayMs: 1000 }
   )
   const embedding = response.data[0].embedding
@@ -73,7 +74,7 @@ async function extractStructuredInfo(
   sourceType: SourceType,
   source: string
 ): Promise<Omit<MemoryInput, 'source' | 'source_type' | 'project_id'>> {
-  const openai = getOpenAI()
+  
 
   const systemPrompt = `You are a Memory Ingest Agent. Extract structured information from the provided content.
 Return a JSON object with:
@@ -92,8 +93,8 @@ Always return valid JSON only, no markdown.`
     : `Source: ${source} (${sourceType})\n\nDescription:\n${content.slice(0, 6000)}`
 
   const response = await withRetry(
-    () => openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    () => llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -120,15 +121,15 @@ Always return valid JSON only, no markdown.`
  * Processes an image file using GPT-4o vision.
  */
 async function describeImage(filePath: string): Promise<string> {
-  const openai = getOpenAI()
+  
   const imageData = fs.readFileSync(filePath)
   const base64 = imageData.toString('base64')
   const ext = path.extname(filePath).toLowerCase()
   const mimeType = SUPPORTED_MEDIA_EXTENSIONS[ext] ?? 'image/jpeg'
 
   const response = await withRetry(
-    () => openai.chat.completions.create({
-      model: 'gpt-4o',
+    () => llm.chat({
+      model: CLAUDE_MODELS.SONNET,
       messages: [{
         role: 'user',
         content: [
@@ -289,12 +290,15 @@ export async function ingestFile(
     SUPPORTED_MEDIA_EXTENSIONS[ext]?.startsWith('video/')
   ) {
     // Audio/Video: use Whisper transcription
-    const openai = getOpenAI()
-    const fileStream = fs.createReadStream(filePath) as Parameters<typeof openai.audio.transcriptions.create>[0]['file']
+    
+    // Whisper transcription uses OpenAI (Claude has no audio API)
+    const { default: OpenAI } = await import('openai')
+    const whisperClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    const fileStream = fs.createReadStream(filePath)
     const transcription = await withRetry(
-      () => openai.audio.transcriptions.create({
+      () => whisperClient.audio.transcriptions.create({
         model: 'whisper-1',
-        file: fileStream,
+        file: fileStream as Parameters<typeof whisperClient.audio.transcriptions.create>[0]['file'],
         response_format: 'text',
       }),
       { maxAttempts: 2, baseDelayMs: 2000 }

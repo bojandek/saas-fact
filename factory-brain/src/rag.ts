@@ -12,7 +12,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
+import { createEmbedding, EMBEDDING_MODELS } from './llm/embeddings'
 import fs from 'fs/promises'
 import path from 'path'
 import { OpenCrawlAgent } from './opencrawl-agent'
@@ -79,12 +79,11 @@ class EmbeddingCache {
 
 export class RAGSystem {
   private supabase: ReturnType<typeof createClient>
-  private openai: OpenAI
   private openCrawlAgent: OpenCrawlAgent
   private embeddingCache: EmbeddingCache
 
   /** OpenAI embedding model - 1536 dimensions, best cost/performance ratio */
-  private static readonly EMBEDDING_MODEL = 'text-embedding-3-small'
+  private static readonly EMBEDDING_MODEL = EMBEDDING_MODELS.VOYAGE
 
   /** Maximum characters to embed per document chunk (avoids token limits) */
   private static readonly MAX_CHUNK_CHARS = 8000
@@ -94,9 +93,6 @@ export class RAGSystem {
       process.env.SUPABASE_URL ?? '',
       process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
     )
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
     this.openCrawlAgent = new OpenCrawlAgent()
     this.embeddingCache = new EmbeddingCache(500)
   }
@@ -115,13 +111,9 @@ export class RAGSystem {
     const cached = this.embeddingCache.get(cacheKey)
     if (cached) return cached
 
-    const response = await this.openai.embeddings.create({
-      model: RAGSystem.EMBEDDING_MODEL,
-      input: truncated,
-      encoding_format: 'float',
-    })
+    const result = await createEmbedding(text, EMBEDDING_MODELS.VOYAGE)
 
-    const embedding = response.data[0].embedding
+    const embedding = result.embedding
     this.embeddingCache.set(cacheKey, embedding)
     return embedding
   }
@@ -139,11 +131,7 @@ export class RAGSystem {
 
     if (missingIndices.length > 0) {
       const missingTexts = missingIndices.map((i) => truncated[i])
-      const response = await this.openai.embeddings.create({
-        model: RAGSystem.EMBEDDING_MODEL,
-        input: missingTexts,
-        encoding_format: 'float',
-      })
+      const result = await createEmbedding(text, EMBEDDING_MODELS.VOYAGE)
 
       response.data.forEach((item, batchIdx) => {
         const originalIdx = missingIndices[batchIdx]

@@ -11,7 +11,7 @@
  *   // => { blocks: ['auth', 'payments', 'calendar', ...], tables: [...], features: [...] }
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { logger } from './utils/logger.js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -265,12 +265,10 @@ const NICHE_KNOWLEDGE_BASE: Record<string, Partial<NicheBlueprint>> = {
 // ─── Niche Mapper Class ───────────────────────────────────────────────────────
 
 export class NicheMapper {
-  private openai: OpenAI
+  private llm = getLLMClient()
   private log = logger.child({ module: 'NicheMapper' })
 
-  constructor() {
-    this.openai = new OpenAI()
-  }
+  constructor() {}
 
   /**
    * Maps a niche string to a full NicheBlueprint.
@@ -394,15 +392,11 @@ Respond with a JSON object (no markdown) with these exact fields:
   "estimatedComplexity": "simple|medium|complex"
 }`
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
+    const parsed = await this.llm.completeJSON({
+      prompt,
+      model: CLAUDE_MODELS.HAIKU,
+      maxTokens: 1000,
     })
-
-    const content = response.choices[0].message.content || '{}'
-    const parsed = JSON.parse(content)
 
     return {
       niche,

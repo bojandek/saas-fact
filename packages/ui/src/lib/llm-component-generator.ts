@@ -12,7 +12,7 @@
  * 5. Learned rules from AutonomousLearningLoop are applied
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../../../../factory-brain/src/llm/client'
 import { z } from 'zod'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -64,11 +64,11 @@ export type GeneratedPage = z.infer<typeof GeneratedPageSchema>
 // ── LLM Component Generator ───────────────────────────────────────────────────
 
 export class LLMNanaBananaGenerator {
-  private openai: OpenAI
+  private llm = getLLMClient()
   private cache: Map<string, GeneratedComponent> = new Map()
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    this.llm = getLLMClient()
   }
 
   /**
@@ -84,8 +84,8 @@ export class LLMNanaBananaGenerator {
 
     const prompt = this.buildComponentPrompt(request)
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.SONNET,
       messages: [
         {
           role: 'system',
@@ -171,8 +171,8 @@ Return ONLY valid JSON, no markdown, no explanations.`,
     availableComponents: string[],
     theme: ComponentRequest['theme']
   ): Promise<GeneratedPage> {
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.SONNET,
       messages: [
         {
           role: 'system',
@@ -230,8 +230,8 @@ The page should:
     category: string
     context: string
   }>> {
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         {
           role: 'user',

@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { RAGSystem } from './rag';
 import { logger } from './utils/logger'
 import { COMPLIANCE_AGENT_PROMPT } from './prompts/agent-prompts'
@@ -11,13 +11,11 @@ interface ComplianceCheckResult {
 }
 
 export class ComplianceCheckerAgent {
-  private openai: OpenAI;
+  private llm = getLLMClient();
   private ragSystem: RAGSystem;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.llm = getLLMClient();
     this.ragSystem = new RAGSystem();
   }
 
@@ -56,8 +54,8 @@ Provide the output as a JSON array of objects with the following structure:
 ]
 `;
 
-    const response = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await this.llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: "system", content: COMPLIANCE_AGENT_PROMPT },
         { role: "user", content: prompt },
@@ -67,7 +65,7 @@ Provide the output as a JSON array of objects with the following structure:
       response_format: { type: "json_object" },
     });
 
-    const resultJson = response.choices[0].message.content;
+    const resultJson = response.content;
     if (!resultJson) {
       throw new Error("Failed to generate compliance check results.");
     }

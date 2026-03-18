@@ -1,11 +1,11 @@
-import OpenAI from 'openai'
 import { SqlGenerator } from './sql-generator'
 import { RAGSystem } from './rag'
 import { WarRoomOrchestrator, AgentContext } from './war-room-orchestrator'
-import { costTracker, extractOpenAIUsage } from './cost-tracker'
+import { costTracker } from './cost-tracker'
 import { withRetry } from './utils/retry'
 import { logger } from './utils/logger'
 import { ARCHITECT_AGENT_PROMPT } from './prompts/agent-prompts'
+import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 
 interface ArchitectBlueprint {
   sqlSchema: string
@@ -14,14 +14,13 @@ interface ArchitectBlueprint {
 }
 
 export class ArchitectAgent {
-  private openai: OpenAI
+  private llm = getLLMClient()
   private sqlGenerator: SqlGenerator
   private ragSystem: RAGSystem
   private orchestrator?: WarRoomOrchestrator
   private log = logger.child({ agent: 'ArchitectAgent' })
 
   constructor(orchestrator?: WarRoomOrchestrator) {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     this.sqlGenerator = new SqlGenerator()
     this.ragSystem = new RAGSystem()
     this.orchestrator = orchestrator
@@ -62,33 +61,26 @@ export class ArchitectAgent {
     )
 
     // 2. Generate API Specification (OpenAPI) — with retry
-    const apiSpecResponse = await withRetry(
-      () =>
-        this.openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+    const apiSpec = await withRetry(
+      async () => {
+        const response = await this.llm.chat({
+          system: ARCHITECT_AGENT_PROMPT + '\n\nYou are an API architect AI that generates OpenAPI specifications.',
           messages: [
             {
-              role: 'system',
-              content: ARCHITECT_AGENT_PROMPT + '\n\nYou are an API architect AI that generates OpenAPI specifications.',
-            },
-            {
               role: 'user',
-              content: `Based on the following SaaS description, generated PostgreSQL schema, and architectural best practices, create an OpenAPI 3.0 specification (YAML format) for the core API endpoints. Focus on CRUD operations for the main entities described. Include paths, methods, request/response bodies, and appropriate status codes.
-
-SaaS Description: ${refinedDescription}
-
-PostgreSQL Schema:
-${sqlSchema}
-
-Architectural Context:
-${combinedContext}
-
-Provide only the YAML content, no additional text.`,
+              content: `Based on the following SaaS description, generated PostgreSQL schema, and architectural best practices, create an OpenAPI 3.0 specification (YAML format) for the core API endpoints. Focus on CRUD operations for the main entities described. Include paths, methods, request/response bodies, and appropriate status codes.\n\nSaaS Description: ${refinedDescription}\n\nPostgreSQL Schema:\n${sqlSchema}\n\nArchitectural Context:\n${combinedContext}\n\nProvide only the YAML content, no additional text.`,
             },
           ],
-          temperature: 0.6,
-          max_tokens: 1500,
-        }),
+          model: CLAUDE_MODELS.SONNET,
+          maxTokens: 2000,
+        })
+        costTracker.record({
+          agentName: 'ArchitectAgent:apiSpec',
+          model: response.model,
+          usage: { promptTokens: response.usage.inputTokens, completionTokens: response.usage.outputTokens, totalTokens: response.usage.totalTokens },
+        })
+        return response.content.trim()
+      },
       {
         maxAttempts: 4,
         onRetry: (attempt, error, delayMs) => {
@@ -97,13 +89,6 @@ Provide only the YAML content, no additional text.`,
       }
     )
 
-    costTracker.record({
-      agentName: 'ArchitectAgent:apiSpec',
-      model: 'gpt-4o-mini',
-      usage: extractOpenAIUsage(apiSpecResponse),
-    })
-
-    const apiSpec = apiSpecResponse.choices[0].message.content?.trim()
     if (!apiSpec) {
       this.log.error('Failed to generate API specification')
       if (this.orchestrator) {
@@ -118,32 +103,26 @@ Provide only the YAML content, no additional text.`,
     }
 
     // 3. Generate RLS Policies — with retry
-    const rlsPoliciesResponse = await withRetry(
-      () =>
-        this.openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+    const rlsPolicies = await withRetry(
+      async () => {
+        const response = await this.llm.chat({
+          system: ARCHITECT_AGENT_PROMPT + '\n\nYou are a security architect AI that generates PostgreSQL Row Level Security policies for multi-tenant applications.',
           messages: [
             {
-              role: 'system',
-              content:
-                ARCHITECT_AGENT_PROMPT + '\n\nYou are a security architect AI that generates PostgreSQL Row Level Security policies for multi-tenant applications.',
-            },
-            {
               role: 'user',
-              content: `Based on the following PostgreSQL schema for a multi-tenant SaaS application and RLS best practices, generate Row Level Security (RLS) policies for each table. Assume a 'tenant_id' column exists in relevant tables and a 'get_current_tenant_id()' function is available. Also, assume 'users' table has 'id', 'tenant_id', and 'role' (owner, admin, user) columns, and 'get_current_user_id()' function is available. Provide only the SQL statements for RLS policies, no additional text or explanations.
-
-PostgreSQL Schema:
-${sqlSchema}
-
-Architectural Context:
-${combinedContext}
-
-Provide only the SQL statements for RLS policies, no additional text or explanations.`,
+              content: `Based on the following PostgreSQL schema for a multi-tenant SaaS application and RLS best practices, generate Row Level Security (RLS) policies for each table. Assume a 'tenant_id' column exists in relevant tables and a 'get_current_tenant_id()' function is available. Also, assume 'users' table has 'id', 'tenant_id', and 'role' (owner, admin, user) columns, and 'get_current_user_id()' function is available. Provide only the SQL statements for RLS policies, no additional text or explanations.\n\nPostgreSQL Schema:\n${sqlSchema}\n\nArchitectural Context:\n${combinedContext}\n\nProvide only the SQL statements for RLS policies, no additional text or explanations.`,
             },
           ],
-          temperature: 0.6,
-          max_tokens: 1000,
-        }),
+          model: CLAUDE_MODELS.SONNET,
+          maxTokens: 1500,
+        })
+        costTracker.record({
+          agentName: 'ArchitectAgent:rlsPolicies',
+          model: response.model,
+          usage: { promptTokens: response.usage.inputTokens, completionTokens: response.usage.outputTokens, totalTokens: response.usage.totalTokens },
+        })
+        return response.content.trim()
+      },
       {
         maxAttempts: 4,
         onRetry: (attempt, error, delayMs) => {
@@ -152,13 +131,6 @@ Provide only the SQL statements for RLS policies, no additional text or explanat
       }
     )
 
-    costTracker.record({
-      agentName: 'ArchitectAgent:rlsPolicies',
-      model: 'gpt-4o-mini',
-      usage: extractOpenAIUsage(rlsPoliciesResponse),
-    })
-
-    const rlsPolicies = rlsPoliciesResponse.choices[0].message.content?.trim()
     if (!rlsPolicies) {
       this.log.error('Failed to generate RLS policies')
       if (this.orchestrator) {

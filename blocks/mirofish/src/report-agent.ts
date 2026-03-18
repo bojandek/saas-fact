@@ -18,7 +18,7 @@
  * 8. Confidence & Methodology
  */
 
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../../../factory-brain/src/llm/client'
 import { z } from 'zod'
 import { logger } from '../../factory-brain/src/utils/logger'
 import { withRetry } from '../../factory-brain/src/utils/retry'
@@ -88,10 +88,10 @@ export type SimulationReport = z.infer<typeof SimulationReportSchema>
 // ── Report Agent ──────────────────────────────────────────────────────────────
 
 export class PostSimulationReportAgent {
-  private openai: OpenAI
+  private llm = getLLMClient()
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+    this.llm = getLLMClient()
   }
 
   /**
@@ -168,8 +168,8 @@ export class PostSimulationReportAgent {
     memoryContext: string | null
   ): Promise<string> {
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Write a 3-4 sentence executive summary for a SaaS market simulation report.
@@ -203,8 +203,8 @@ Write a professional, data-driven executive summary. Be specific with numbers.`,
       : ''
 
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Analyze market segmentation for this SaaS simulation.
@@ -241,8 +241,8 @@ JSON only, no markdown.`,
     memoryContext: string | null
   ): Promise<ReportSection> {
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Analyze churn risk patterns from this SaaS simulation.
@@ -287,8 +287,8 @@ JSON only.`,
       .join('\n')
 
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Analyze feature adoption from this SaaS simulation.
@@ -324,8 +324,8 @@ JSON only.`,
     memoryContext: string | null
   ): Promise<ReportSection> {
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Analyze revenue projections from this SaaS simulation.
@@ -364,8 +364,8 @@ JSON only.`,
     memoryContext: string | null
   ): Promise<ReportSection> {
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Analyze behavioral patterns from this SaaS simulation.
@@ -402,8 +402,8 @@ JSON only.`,
     memoryContext: string | null
   ): Promise<SimulationReport['top_recommendations']> {
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Generate 6-8 actionable recommendations based on this SaaS simulation.
@@ -444,8 +444,8 @@ Sort by priority (critical first). JSON only.`,
     const avgChurnRisk = summary.final_metrics.avg_churn_risk
 
     const response = await withRetry(
-      () => this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      () => this.llm.chat({
+        model: CLAUDE_MODELS.HAIKU,
         messages: [{
           role: 'user',
           content: `Predict outcomes for this SaaS product based on simulation data.

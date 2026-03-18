@@ -8,7 +8,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
+import { getLLMClient, CLAUDE_MODELS } from '../llm/client'
+import { createEmbedding, EMBEDDING_MODELS } from '../llm/embeddings'
 import { logger } from '../utils/logger'
 import { withRetry } from '../utils/retry'
 import type {
@@ -29,17 +30,17 @@ function getSupabase() {
   return createClient(url, key)
 }
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const llm = getLLMClient()
+)
 }
 
 // ── Embedding ─────────────────────────────────────────────────────────────────
 
 async function generateQueryEmbedding(query: string): Promise<number[]> {
-  const openai = getOpenAI()
+  
   const response = await withRetry(
-    () => openai.embeddings.create({
-      model: 'text-embedding-3-small',
+    () => createEmbedding({
+      model: EMBEDDING_MODELS.VOYAGE,
       input: query.slice(0, 8000),
     }),
     { maxAttempts: 3, baseDelayMs: 1000 }
@@ -106,7 +107,7 @@ async function generateAnswer(
   memories: MemorySearchResult[],
   consolidations: ConsolidationSearchResult[]
 ): Promise<{ answer: string; confidence: number; sources: string[] }> {
-  const openai = getOpenAI()
+  
 
   if (memories.length === 0 && consolidations.length === 0) {
     return {
@@ -133,8 +134,8 @@ If memories are insufficient, say so honestly.
 Be concise but thorough. Focus on actionable information.`
 
   const response = await withRetry(
-    () => openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    () => llm.chat({
+      model: CLAUDE_MODELS.HAIKU,
       messages: [
         { role: 'system', content: systemPrompt },
         {
