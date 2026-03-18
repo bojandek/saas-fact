@@ -10,8 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { NicheMapper } from '../../../factory-brain/src/niche-mapper.js'
-import { logger } from '../../../factory-brain/src/utils/logger.js'
+import { NicheMapper } from '../../../../factory-brain/src/niche-mapper'
+import { logger } from '../../../../factory-brain/src/utils/logger'
 
 const log = logger.child({ route: 'POST /api/niche-map' })
 

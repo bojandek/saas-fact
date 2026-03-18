@@ -137,19 +137,3 @@ export type TenantUpdate = Tables['tenants']['Update']
 export type Subscription = Tables['subscriptions']['Row']
 export type SubscriptionInsert = Tables['subscriptions']['Insert']
 export type SubscriptionUpdate = Tables['subscriptions']['Update']
-          plan?: 'free' | 'pro' | 'enterprise'
-          stripe_customer_id?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          subdomain?: string | null
-          plan?: 'free' | 'pro' | 'enterprise'
-          stripe_customer_id?: string | null
-          created_at?: string
-        }
-      }
-    }
-  }
-}

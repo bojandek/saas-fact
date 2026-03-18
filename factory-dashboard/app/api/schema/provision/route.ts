@@ -22,8 +22,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { SchemaProvisioner } from '../../../../factory-brain/src/schema-provisioner.js'
-import { logger } from '../../../../factory-brain/src/utils/logger.js'
+import { SchemaProvisioner } from '../../../../../factory-brain/src/schema-provisioner'
+import { logger } from '../../../../../factory-brain/src/utils/logger'
 
 const log = logger.child({ route: 'POST /api/schema/provision' })
 

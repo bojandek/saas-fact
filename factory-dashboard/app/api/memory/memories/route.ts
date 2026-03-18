@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { withAuth, errorResponse } from '@/lib/api-helpers'
+import { withAuth, errorResponse } from '../../../../lib/api-helpers'
 
 export const GET = withAuth(async (req: NextRequest, _userId: string) => {
   try {
@@ -13,7 +13,7 @@ export const GET = withAuth(async (req: NextRequest, _userId: string) => {
     const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('page_size') ?? '20', 10)))
     const projectId = searchParams.get('project_id') ?? undefined
 
-    const { getAllMemories } = await import('@factory-brain/memory')
+    const { getAllMemories } = await import('../../../../../factory-brain/src/memory')
     const result = await getAllMemories(page, pageSize, projectId)
 
     return NextResponse.json({ success: true, ...result })

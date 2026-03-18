@@ -120,7 +120,7 @@ export class MetaClawEngine {
 
     // Architecture mutations
     if (Math.random() < this.mutationRate) {
-      mutant.architecture.caching Strategy = this.selectRandomCachingStrategy();
+      mutant.architecture.cachingStrategy = this.selectRandomCachingStrategy();
     }
     if (Math.random() < this.mutationRate) {
       mutant.architecture.apiStyle = this.selectRandomApiStyle();

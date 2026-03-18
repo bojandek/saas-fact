@@ -4,11 +4,11 @@
  */
 
 import { NextResponse } from 'next/server'
-import { withAuth, errorResponse } from '@/lib/api-helpers'
+import { withAuth, errorResponse } from '../../../../lib/api-helpers'
 
 export const POST = withAuth(async (_req, _userId) => {
   try {
-    const { runConsolidationCycle } = await import('@factory-brain/memory')
+    const { runConsolidationCycle } = await import('../../../../../factory-brain/src/memory')
     const result = await runConsolidationCycle(2, 10)
 
     if (!result) {

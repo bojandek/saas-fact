@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { applyRateLimit } from '../../../lib/rate-limit'
 import { withAuth, withValidation } from '../../../lib/api-helpers'
-import { LegalTermsGenerator } from '@/factory-brain/src/legal-terms-generator'
+import { LegalTermsGenerator } from '../../../../factory-brain/src/legal-terms-generator'
 
 const LegalDocsSchema = z.object({
   companyName: z.string().min(2).max(200),

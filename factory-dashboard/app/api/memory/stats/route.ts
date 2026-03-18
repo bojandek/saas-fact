@@ -4,11 +4,11 @@
  */
 
 import { NextResponse } from 'next/server'
-import { withAuth, errorResponse } from '@/lib/api-helpers'
+import { withAuth, errorResponse } from '../../../../lib/api-helpers'
 
 export const GET = withAuth(async (_req, _userId) => {
   try {
-    const { getMemoryStats } = await import('@factory-brain/memory')
+    const { getMemoryStats } = await import('../../../../../factory-brain/src/memory')
     const stats = await getMemoryStats()
     return NextResponse.json({ success: true, stats })
   } catch (err) {

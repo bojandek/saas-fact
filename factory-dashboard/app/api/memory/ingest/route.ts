@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { withAuth, withValidation, errorResponse } from '@/lib/api-helpers'
+import { withAuth, withValidation, errorResponse } from '../../../../lib/api-helpers'
 
 const IngestSchema = z.object({
   text: z.string().min(1, 'Text is required').max(50_000),
@@ -17,7 +17,7 @@ export const POST = withAuth(async (req, userId) => {
   return withValidation(IngestSchema, req, async (body) => {
     try {
       // Dynamically import to avoid bundling server-only code
-      const { ingestText } = await import('@factory-brain/memory')
+      const { ingestText } = await import('../../../../../factory-brain/src/memory')
 
       const result = await ingestText(body.text, body.source, body.project_id)
 

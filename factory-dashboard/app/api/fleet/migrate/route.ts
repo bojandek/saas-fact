@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withAuth, withValidation } from '@/lib/api-helpers'
+import { withAuth, withValidation } from '../../../../lib/api-helpers'
 import { z } from 'zod'
 
 const MigrateSchema = z.object({

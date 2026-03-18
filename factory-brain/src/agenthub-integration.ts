@@ -4,7 +4,7 @@
  * Enables artifact versioning, proposal-based collaboration, and conflict resolution
  */
 
-import { AgentHubCore, Artifact, ArtifactType, InitWorkspaceRequest } from '../blocks/agenthub/src/core'
+import { AgentHubCore, Artifact, ArtifactType, InitWorkspaceRequest } from '../../blocks/agenthub/src/core'
 import { ArchitectAgent, CodeReviewAgent, DesignAgent, ContentAgent, DataAgent } from './agents'
 import { MemorySystem } from './memory'
 import { RAGSystem } from './rag'

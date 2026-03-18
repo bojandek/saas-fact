@@ -247,3 +247,11 @@ export const AssembleSaasSchema = z.object({
     fontFamily: z.string().optional(),
   }).optional(),
 })
+// ─── Convenience Error Helpers ────────────────────────────────────────────────
+// Used by API routes that need a simple apiError(message, status) call
+export function apiError(message: string, status = 500): NextResponse {
+  return NextResponse.json({ error: message }, { status })
+}
+
+// Alias used by memory routes
+export const errorResponse = apiError

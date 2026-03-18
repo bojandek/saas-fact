@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { withAuth, withValidation, errorResponse } from '@/lib/api-helpers'
+import { withAuth, withValidation, errorResponse } from '../../../../lib/api-helpers'
 
 const QuerySchema = z.object({
   question: z.string().min(1, 'Question is required').max(1_000),
@@ -17,7 +17,7 @@ const QuerySchema = z.object({
 export const POST = withAuth(async (req, _userId) => {
   return withValidation(QuerySchema, req, async (body) => {
     try {
-      const { queryMemory } = await import('@factory-brain/memory')
+      const { queryMemory } = await import('../../../../../factory-brain/src/memory')
 
       const result = await queryMemory(body.question, {
         matchThreshold: body.match_threshold,

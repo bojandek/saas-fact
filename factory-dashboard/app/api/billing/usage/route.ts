@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getUsageBillingService } from '@saas-factory/factory-brain/billing/usage-billing'
-import type { BillingTier } from '@saas-factory/factory-brain/billing/usage-billing'
+import { getUsageBillingService } from '../../../../../factory-brain/src/billing/usage-billing'
+import type { BillingTier } from '../../../../../factory-brain/src/billing/usage-billing'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const userId = request.headers.get('x-user-id')

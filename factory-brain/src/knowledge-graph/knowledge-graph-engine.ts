@@ -3,8 +3,8 @@
  * Upravlja znanjem između 150+ SaaS aplikacija sa event-driven arhitekturom
  */
 
-import {
 import { logger } from '../utils/logger'
+import {
   KnowledgeEntity,
   EntityType,
   GraphRelationship,

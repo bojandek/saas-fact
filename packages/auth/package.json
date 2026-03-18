@@ -1,0 +1,14 @@
+{
+  "name": "@saas-factory/auth",
+  "version": "0.0.1",
+  "description": "Auth utilities for SaaS Factory — thin wrapper around @supabase/ssr",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

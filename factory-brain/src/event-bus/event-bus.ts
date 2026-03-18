@@ -3,8 +3,8 @@
  * Implementacija sa Redis Streams (production-ready)
  */
 
-import {
 import { logger } from '../utils/logger'
+import {
   SystemEvent,
   EventType,
   EventHandler,

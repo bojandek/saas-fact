@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getUsageBillingService } from '@saas-factory/factory-brain/billing/usage-billing'
+import { getUsageBillingService } from '../../../../../factory-brain/src/billing/usage-billing'
 
 const CheckoutSchema = z.object({
   tier: z.enum(['pro', 'agency']),

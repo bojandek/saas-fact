@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getUsageBillingService } from '@saas-factory/factory-brain/billing/usage-billing'
+import { getUsageBillingService } from '../../../../../factory-brain/src/billing/usage-billing'
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const rawBody = await request.text()

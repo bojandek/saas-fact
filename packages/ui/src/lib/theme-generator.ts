@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { RAGSystem } from '../../../factory-brain/src/rag';
-import { WarRoomOrchestrator, AgentMessage, AgentContext } from '../../../factory-brain/src/war-room-orchestrator';
+import { RAGSystem } from '../../../../factory-brain/src/rag';
+import { WarRoomOrchestrator, AgentMessage, AgentContext } from '../../../../factory-brain/src/war-room-orchestrator';
 
 interface GeneratedTheme {
   primaryColor: string;
