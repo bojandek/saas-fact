@@ -43,8 +43,6 @@ function getSupabase() {
 }
 
 const llm = getLLMClient()
-)
-}
 
 // ── Embedding ─────────────────────────────────────────────────────────────────
 

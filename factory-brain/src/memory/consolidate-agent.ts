@@ -33,8 +33,6 @@ function getSupabase() {
 }
 
 const llm = getLLMClient()
-)
-}
 
 // ── Database Operations ───────────────────────────────────────────────────────
 

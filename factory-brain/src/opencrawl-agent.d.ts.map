@@ -1,0 +1,1 @@
+{"version":3,"file":"opencrawl-agent.d.ts","sourceRoot":"","sources":["opencrawl-agent.ts"],"names":[],"mappings":"AAGA,UAAU,WAAW;IACnB,GAAG,EAAE,MAAM,CAAC;IACZ,KAAK,EAAE,MAAM,CAAC;IACd,OAAO,EAAE,MAAM,CAAC;CACjB;AAED,qBAAa,cAAc;IACzB,OAAO,CAAC,eAAe,CAAS;;IAO1B,KAAK,CAAC,KAAK,EAAE,MAAM,EAAE,KAAK,GAAE,MAAU,GAAG,OAAO,CAAC,WAAW,EAAE,CAAC;CAwBtE"}

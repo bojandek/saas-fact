@@ -131,12 +131,14 @@ export class RAGSystem {
 
     if (missingIndices.length > 0) {
       const missingTexts = missingIndices.map((i) => truncated[i])
-      const result = await createEmbedding(text, EMBEDDING_MODELS.VOYAGE)
-
-      response.data.forEach((item, batchIdx) => {
+      // Voyage AI processes texts individually — batch via Promise.all
+      const embeddings = await Promise.all(
+        missingTexts.map((t) => createEmbedding(t, EMBEDDING_MODELS.VOYAGE).then((r) => r.embedding))
+      )
+      embeddings.forEach((embedding, batchIdx) => {
         const originalIdx = missingIndices[batchIdx]
-        results[originalIdx] = item.embedding
-        this.embeddingCache.set(truncated[originalIdx], item.embedding)
+        results[originalIdx] = embedding
+        this.embeddingCache.set(truncated[originalIdx], embedding)
       })
     }
 

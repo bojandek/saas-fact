@@ -1,21 +1,29 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "../..",
     "outDir": "./dist",
-    "rootDir": "./src",
     "module": "commonjs",
+    "moduleResolution": "node",
     "target": "ES2020",
-    "strict": true,
+    "strict": false,
+    "noEmitOnError": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
     "sourceMap": true,
-    "lib": ["ES2020", "DOM"]
+    "lib": ["ES2020"],
+    "paths": {
+      "@saas-factory/factory-brain": ["factory-brain/src/index.ts"],
+      "@saas-factory/factory-brain/*": ["factory-brain/src/*"]
+    }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
