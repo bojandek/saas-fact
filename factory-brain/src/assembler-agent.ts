@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { KnowledgeExtractorAgent } from './knowledge-extractor-agent';
 import { QaAgent } from './qa-agent';
+import { ASSEMBLER_AGENT_PROMPT } from './prompts/agent-prompts';
 import { NanoBananaComponentGenerator, GeneratedComponent } from '../../packages/ui/src/lib/component-generator';
 import { logger } from './utils/logger'
 

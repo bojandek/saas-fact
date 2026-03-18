@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { ARCHITECT_AGENT_PROMPT } from './prompts/agent-prompts';
 
 export class SqlGenerator {
   private openai: OpenAI;
@@ -19,7 +20,7 @@ Provide only the SQL CREATE TABLE statement, without any additional text or expl
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o-mini", // Using a capable model for schema generation
       messages: [
-        { role: "system", content: "You are a helpful assistant that generates PostgreSQL SQL schemas." },
+        { role: "system", content: ARCHITECT_AGENT_PROMPT + "\n\nYou are a helpful assistant that generates PostgreSQL SQL schemas." },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,

@@ -1,5 +1,6 @@
 import { OpenAI } from 'openai';
 import { AgentContext, AgentMessage } from './war-room-orchestrator';
+import { QA_AGENT_PROMPT } from './prompts/agent-prompts';
 
 interface GeneratedTheme {
   primaryColor: string;
@@ -123,7 +124,7 @@ export class QaAgent {
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4.1-mini', // Using a capable model for code generation
         messages: [
-          { role: 'system', content: 'You are an expert QA Engineer generating Playwright tests.' },
+          { role: 'system', content: QA_AGENT_PROMPT + '\n\nYou are an expert QA Engineer generating Playwright tests.' },
           { role: 'user', content: prompt },
         ],
         response_format: { type: 'json_object' },

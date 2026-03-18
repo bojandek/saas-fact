@@ -5,6 +5,7 @@ import { WarRoomOrchestrator, AgentContext } from './war-room-orchestrator'
 import { costTracker, extractOpenAIUsage } from './cost-tracker'
 import { withRetry } from './utils/retry'
 import { logger } from './utils/logger'
+import { ARCHITECT_AGENT_PROMPT } from './prompts/agent-prompts'
 
 interface ArchitectBlueprint {
   sqlSchema: string
@@ -68,7 +69,7 @@ export class ArchitectAgent {
           messages: [
             {
               role: 'system',
-              content: 'You are an API architect AI that generates OpenAPI specifications.',
+              content: ARCHITECT_AGENT_PROMPT + '\n\nYou are an API architect AI that generates OpenAPI specifications.',
             },
             {
               role: 'user',
@@ -125,7 +126,7 @@ Provide only the YAML content, no additional text.`,
             {
               role: 'system',
               content:
-                'You are a security architect AI that generates PostgreSQL Row Level Security policies for multi-tenant applications.',
+                ARCHITECT_AGENT_PROMPT + '\n\nYou are a security architect AI that generates PostgreSQL Row Level Security policies for multi-tenant applications.',
             },
             {
               role: 'user',
