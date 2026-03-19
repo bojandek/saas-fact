@@ -954,6 +954,80 @@ program
     }
   })
 
+// ── agents ───────────────────────────────────────────────────────────────────
+
+program
+  .command('agents')
+  .description('List all available Agency Agents (26 specialized AI experts)')
+  .option('--json', 'Output as JSON')
+  .action(async (opts) => {
+    try {
+      const { listAgents } = await import('../../factory-brain/src/agency-agent-loader.js').catch(
+        () => import('../../../factory-brain/src/agency-agent-loader.js')
+      )
+      const agents = listAgents()
+
+      if (opts.json) {
+        console.log(JSON.stringify(agents, null, 2))
+        return
+      }
+
+      console.log(chalk.bold(`\n🏢 SaaS Factory Agency Team (${agents.length} agents):\n`))
+
+      const groups: Record<string, typeof agents> = {}
+      for (const a of agents) {
+        const prefix = a.filename.split('-')[0]
+        if (!groups[prefix]) groups[prefix] = []
+        groups[prefix].push(a)
+      }
+
+      for (const [group, groupAgents] of Object.entries(groups)) {
+        console.log(chalk.bold(`  ${group.charAt(0).toUpperCase() + group.slice(1)}:`))
+        for (const a of groupAgents) {
+          console.log(`    ${a.emoji}  ${chalk.cyan(a.filename.padEnd(40))} ${chalk.dim(a.vibe)}`)
+        }
+        console.log()
+      }
+    } catch (err) {
+      console.error(chalk.red(`✗ ${err instanceof Error ? err.message : String(err)}`))
+      process.exit(1)
+    }
+  })
+
+// ── agent ─────────────────────────────────────────────────────────────────────
+
+program
+  .command('agent')
+  .description('Run a specific Agency Agent on a task')
+  .requiredOption('--name <agentName>', 'Agent filename (e.g. marketing-growth-hacker)')
+  .requiredOption('--task <task>', 'Task description for the agent')
+  .option('--context <context>', 'Additional context to provide')
+  .option('--app <appName>', 'App name for context')
+  .action(async (opts) => {
+    const spinner = ora(`Running ${opts.name}...`).start()
+    try {
+      const { runAgentTask } = await import('../../factory-brain/src/agency-agent-loader.js').catch(
+        () => import('../../../factory-brain/src/agency-agent-loader.js')
+      )
+
+      const context = opts.context || (opts.app ? `App: ${opts.app}` : undefined)
+      const result = await runAgentTask(opts.name, opts.task, context)
+
+      if (result.success) {
+        spinner.succeed(chalk.green(`✅ ${result.agent}`))
+        console.log(chalk.bold('\n📋 Output:\n'))
+        console.log(result.output)
+        console.log()
+      } else {
+        spinner.fail(chalk.red(`✗ ${result.output}`))
+        process.exit(1)
+      }
+    } catch (err) {
+      spinner.fail(chalk.red(`✗ ${err instanceof Error ? err.message : String(err)}`))
+      process.exit(1)
+    }
+  })
+
 // ── Parse ─────────────────────────────────────────────────────────────────────
 
 program.parse(process.argv)
