@@ -139,6 +139,8 @@ program
   .option('--org <orgId>', 'Organization ID (UUID)', 'cli-org-default')
   .option('--skip-deploy', 'Skip deployment step')
   .option('--skip-qa', 'Skip QA testing step')
+  .option('--style <style>', 'Visual style preset: minimalist | corporate | cyberpunk | playful | elegant | brutalism')
+  .option('--color <hex>', 'Primary brand color (hex, e.g. #3b82f6)')
   .option('--api', 'Use API mode (requires factory-dashboard to be running)')
   .option('--priority <1-10>', 'Queue priority for API mode (1=low, 10=high)', '5')
   .option('--wait', 'Wait for job to complete in API mode')
@@ -197,6 +199,8 @@ program
     console.log(`  App:    ${chalk.cyan(opts.name)}`)
     if (opts.niche) console.log(`  Niche:  ${chalk.cyan(opts.niche)}`)
     if (opts.desc) console.log(`  Desc:   ${chalk.dim(opts.desc)}`)
+    if (opts.style) console.log(`  Style:  ${chalk.magenta(opts.style)}`)
+    if (opts.color) console.log(`  Color:  ${chalk.hex(opts.color || '#6366f1')(opts.color || 'auto')}`)
     console.log(`  Org:    ${chalk.dim(opts.org)}`)
     console.log()
 
@@ -227,6 +231,8 @@ program
       orgId: opts.org,
       skipDeploy: opts.skipDeploy || false,
       skipQA: opts.skipQa || false,
+      style: opts.style,
+      themeColor: opts.color,
       onProgress: (event) => {
         const stepLabel = event.step.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
         const key = event.step
@@ -248,6 +254,9 @@ program
       console.log(`  App:          ${chalk.cyan(result.appName)}`)
       console.log(`  Niche:        ${chalk.dim(result.niche)}`)
       console.log(`  Path:         ${chalk.cyan(result.appPath)}`)
+      if (opts.style || opts.color) {
+        console.log(`  Design:       ${chalk.magenta(opts.style || 'auto')} ${opts.color ? chalk.hex(opts.color)(opts.color) : ''}`)
+      }
       if (result.deployUrl) {
         console.log(`  Live URL:     ${chalk.cyan(result.deployUrl)}`)
       }

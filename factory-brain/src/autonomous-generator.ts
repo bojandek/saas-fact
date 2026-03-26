@@ -39,6 +39,10 @@ export interface GenerateOptions {
   skipDeploy?: boolean
   /** Skip QA agent */
   skipQA?: boolean
+  /** Requested visual style (e.g., minimalist, corporate) */
+  style?: string
+  /** Requested primary color (e.g., #3b82f6) */
+  themeColor?: string
   /** Callback for real-time progress updates */
   onProgress?: (event: ProgressEvent) => void
 }
@@ -141,6 +145,7 @@ export class AutonomousGenerator {
           const { ComplianceCheckerAgent } = await import('./compliance-checker-agent.js')
           const { QaAgent } = await import('./qa-agent.js')
           const { LegalTermsGenerator } = await import('./legal-terms-generator.js')
+          const { ThemeAgent } = await import('./theme-agent.js')
 
           // Build AgentContext from available data
           const context = {
@@ -155,6 +160,7 @@ export class AutonomousGenerator {
           const complianceAgent = new ComplianceCheckerAgent()
           const qaAgent = new QaAgent()
           const legalAgent = new LegalTermsGenerator()
+          const themeAgent = new ThemeAgent(orchestrator)
 
           const growthPlan: Record<string, unknown> = {}
           const complianceResult: Record<string, unknown> = {}
@@ -165,8 +171,9 @@ export class AutonomousGenerator {
             theme: {
               name: 'theme',
               run: async () => {
-                orchestrator.updateContext({ theme: { primaryColor: '#6366f1', style: 'modern' } })
-                return { primaryColor: '#6366f1', style: 'modern' }
+                const result = await themeAgent.generateTheme(description, opts.style, opts.themeColor)
+                orchestrator.updateContext({ theme: result })
+                return result
               },
             },
             blueprint: {
