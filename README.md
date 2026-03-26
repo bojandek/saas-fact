@@ -1,127 +1,83 @@
 # SaaS Factory 🏭
 
-Autonomni sistem za generisanje kompletnih SaaS aplikacija jednom komandom.
+SaaS Factory is an autonomous AI system that generates complete, production-ready SaaS applications from a single CLI command. It uses a multi-agent "War Room" architecture to handle everything from database schema design to landing page copywriting, compliance checking, and market simulation.
 
----
+## 🚀 Quick Start
 
-## ⚡ Brzi start — Setup Wizard
+### Option 1: Docker Compose (Recommended)
 
-**Linux / macOS:**
+The easiest way to run the Factory Control Center dashboard:
+
 ```bash
-git clone https://github.com/bojandek/saas-fact
+# 1. Clone the repository
+git clone https://github.com/bojandek/saas-fact.git
 cd saas-fact
-bash setup.sh
+
+# 2. Copy the environment file and add your API keys
+cp .env.example .env.local
+# Edit .env.local and add your ANTHROPIC_API_KEY and SUPABASE_URL
+
+# 3. Start the Control Center
+docker-compose up -d
 ```
 
-**Windows:**
-```
-git clone https://github.com/bojandek/saas-fact
-cd saas-fact
-setup.bat
-```
+Then open `http://localhost:3000` in your browser to access the Factory Control Center.
 
-Wizard automatski: instalira dependencies, pita za API ključeve, kreira `.env.local`, builda CLI.
+### Option 2: Local Setup Wizard
 
-**Nakon setupа:**
-```bash
-./factory niche-list                                          # Lista niša
-./factory generate --niche "teretana-crm" --name moj-gym     # Generiši SaaS
-```
-
----
-
-# SaaS Factory - Vrhunska Platforma za Gradnju SaaS Aplikacija
-
-Dobrodošli u **SaaS Factory** – vašu autonomnu tvornicu softvera koja pretvara ideje u produkcijski spremne SaaS aplikacije, koristeći najnovije AI tehnologije i najbolje prakse u industriji.
-
-## 🚀 Što je SaaS Factory?
-
-SaaS Factory je monorepo sustav izgrađen s `pnpm workspaces` i `Turborepo`, dizajniran za izuzetnu skalabilnost i modularnost. Srce sustava je **Orchestrator**, inteligentni AI sustav koji koordinira rad specijaliziranih agenata kako bi automatizirao cijeli životni ciklus SaaS-a:
-
--   **Nano Banana UI Engine**: Generira vrhunski, unikatni UI dizajn i komponente.
--   **Architect Agent**: Dizajnira bazu podataka (SQL sheme, RLS politike) i API arhitekturu.
--   **Assembler Agent**: Sklapa kod u funkcionalnu aplikaciju koristeći Micro-Frontend arhitekturu i gotove blokove.
--   **Landing Page Generator**: Kreira marketinške stranice za vaš SaaS.
--   **Growth Hacker Agent**: Planira SEO, social media i email kampanje.
--   **Compliance Checker**: Provjerava usklađenost s regulativama (GDPR, SOC2).
--   **QA Agent**: Generira automatske Playwright testove za osiguranje kvalitete.
--   **Legal & Terms Generator**: Automatski generira pravne dokumente (ToS, Privacy Policy).
--   **War Room Orchestrator**: Koordinira komunikaciju i suradnju između svih agenata.
--   **Autonomous Learning Loop**: Sustav koji samostalno uči iz svakog generiranog SaaS-a i poboljšava svoje performanse.
-
-## ✨ Ključne Značajke
-
--   **AI-Powered Development**: Od ideje do koda uz minimalnu ljudsku intervenciju.
--   **Micro-Frontend Arhitektura**: Svaki SaaS je nezavisan modul, spreman za skaliranje.
--   **Multi-Tenant Ready**: Ugrađena sigurnost i izolacija podataka (RLS).
--   **Vrhunski Dizajn**: Nano Banana osigurava Apple-level UX/UI.
--   **Automatsko Testiranje**: QA Agent garantira kvalitetu koda.
--   **Pravna Sigurnost**: Automatsko generiranje ključnih pravnih dokumenata.
--   **Kontinuirano Učenje**: Sustav postaje pametniji sa svakim novim projektom.
--   **Integracija s Coolify**: Jednostavan "One-Click Deploy" na produkciju.
-
-## 🚀 Kako Koristiti SaaS Factory Orchestrator?
-
-### 1. Pristup Dashboardu
-
-Pokrenite `factory-dashboard` aplikaciju:
+If you prefer to run the CLI directly on your machine:
 
 ```bash
-pnpm dev
+# Run the interactive setup wizard
+./setup.sh
+
+# The wizard will install dependencies, build the project, and configure your API keys.
 ```
 
-Navigirajte na `/orchestrator` stranicu u vašem pregledniku.
+## 🛠️ Usage (CLI)
 
-### 2. Unesite Opis Vaše Ideje
+Once installed, you can use the `factory` CLI command:
 
-U Orchestrator sučelju, unesite detaljan opis vašeg SaaS-a. Što je opis detaljniji, to će AI agenti generirati preciznije rezultate.
+```bash
+# List all 19 predefined SaaS niches
+factory niche-list
 
-*Primjer: "Moderni CRM za male zubare s mogućnošću zakazivanja termina, upravljanja pacijentima i automatskog slanja SMS podsjetnika. Dizajn treba biti čist, profesionalan, s plavim i zelenim akcentima. Treba podržavati više lokacija ordinacija i biti GDPR usklađen."*
+# See the architecture blueprint for a specific niche
+factory niche-map --niche "teretana-crm"
 
-### 3. Pratite Proces Generiranja
+# Generate a complete SaaS application
+factory generate --niche "teretana-crm" --name moj-gym --style apple --color '#007AFF'
+```
 
-Sustav će automatski proći kroz sljedeće korake, a vi možete pratiti komunikaciju agenata u "War Room" logu:
+Generated applications are saved in the `apps/` directory.
 
-1.  **Nano Banana UI Engine**: Generira unikatnu paletu boja, tipografiju i UI komponente.
-2.  **Architect Agent**: Dizajnira SQL shemu, API specifikaciju i RLS politike.
-3.  **Landing Page Generator**: Kreira marketinšku stranicu s cijenama i značajkama.
-4.  **Growth Hacker Agent**: Planira SEO, social media i email kampanje.
-5.  **Compliance Checker**: Provjerava usklađenost s regulativama (npr. GDPR).
-6.  **QA Agent**: Generira Playwright testove za ključne funkcionalnosti.
-7.  **Legal & Terms Generator**: Kreira pravne dokumente (ToS, Privacy Policy).
-8.  **Assembler Agent**: Sklapa sve u novu SaaS aplikaciju u `apps/saas-{vaša-ideja}`.
+## 🧠 Architecture: The War Room
 
-### 4. Pregled, Testiranje i Deploy
+SaaS Factory uses a parallel multi-agent pipeline to build your app:
 
-Nakon što je proces završen, vaša nova SaaS aplikacija je spremna:
+1. **ThemeAgent**: Selects design tokens based on expert knowledge (Apple HIG, Refactoring UI).
+2. **ArchitectAgent**: Designs the SQL schema and API specification.
+3. **AssemblerAgent**: Writes the Next.js/React code with TailwindCSS.
+4. **GrowthHackerAgent**: Creates SEO audits, content gaps, and a 30-day growth plan.
+5. **ComplianceAgent**: Checks for GDPR, SOC2, HIPAA, and PCI-DSS compliance.
+6. **QAAgent**: Writes Playwright E2E tests based on the testing pyramid.
+7. **LegalAgent**: Generates Terms of Service and Privacy Policies.
+8. **PricingIntelligenceAgent**: Determines the optimal pricing tiers and strategy.
+9. **MirofishAgent**: Simulates 1000+ AI users to predict churn, feature adoption, and market fit.
 
--   **Pregled koda**: Pronađite je u `apps/saas-{vaša-ideja}`.
--   **Pokretanje testova**: `cd apps/saas-{vaša-ideja} && pnpm test`
--   **Deploy na Coolify**: Koristite integraciju za "One-Click Deploy" na vašu produkcijsku infrastrukturu.
+## ✨ Advanced Features
 
-## 🛠️ Struktura Monorepa
+- **MetaClaw Learning Loop**: A genetic algorithm that evaluates generated apps and improves the agent prompts for the next generation. The system gets smarter with every app it builds.
+- **Mirofish Market Simulation**: Before you even launch, 1000+ AI personas "use" your app to predict market behavior and revenue.
+- **Anthropic Knowledge Work Plugins**: Agents use structured frameworks for Architecture Decision Records (ADRs), Code Reviews, and Sprint Planning.
+- **Factory Control Center**: A beautiful web dashboard to monitor generations, view the fleet of apps, and analyze MetaClaw learning metrics.
 
--   **`apps/`**: Sadrži sve generirane SaaS aplikacije (Micro-Frontends) i `factory-dashboard`.
--   **`blocks/`**: Višekratno upotrebljivi moduli (Auth, Database, Payments, Social Media Integration, Advanced Multi-Tenant, itd.).
--   **`packages/`**: Zajedničke komponente i utilsi (`ui`, `db`, `core`).
--   **`factory-brain/`**: Srce AI inteligencije, sadrži sve agente i bazu znanja (`knowledge/`).
+## 📦 Project Structure
 
-## 📚 Baza Znanja (Factory Brain Knowledge)
+- `apps/`: Generated SaaS applications and the Factory Control Center.
+- `blocks/`: Reusable, pre-built modules (auth, payments, database, mirofish, etc.).
+- `factory-brain/`: The core AI engine, agents, memory, and knowledge base.
 
-`factory-brain/knowledge/` sadrži stručne dokumente koje AI agenti koriste za donošenje odluka. Ovdje su pohranjeni principi Apple dizajna, Clean Architecture, SaaS strategije, sigurnosne smjernice i znanje iz analiziranih open-source projekata.
+## 📄 License
 
-## 🛡️ Sigurnost i Kvaliteta
-
-SaaS Factory je izgrađen s fokusom na sigurnost i kvalitetu:
-
--   **Row Level Security (RLS)**: Automatska izolacija podataka između tenanta.
--   **Automatsko Testiranje**: QA Agent osigurava da je svaka generirana aplikacija funkcionalna i bez bugova.
--   **Compliance Checks**: Provjera usklađenosti s industrijskim standardima.
-
-## 📈 Budući Razvoj
-
-Sustav je dizajniran za kontinuirano učenje i proširenje. Kroz `Autonomous Learning Loop` i `OpenCrawl` integraciju, SaaS Factory će se stalno poboljšavati i prilagođavati najnovijim trendovima i najboljim praksama.
-
----
-
-**Sretno s gradnjom vašeg sljedećeg velikog SaaS-a! 🚀🍌🧠🛡️🔥🌍**
+MIT License

@@ -141,6 +141,7 @@ program
   .option('--skip-qa', 'Skip QA testing step')
   .option('--style <style>', 'Visual style preset: minimalist | corporate | cyberpunk | playful | elegant | brutalism')
   .option('--color <hex>', 'Primary brand color (hex, e.g. #3b82f6)')
+  .option('--export <platform>', 'Export to no-code platform (bubble, flutterflow, webflow, retool, zapier)')
   .option('--api', 'Use API mode (requires factory-dashboard to be running)')
   .option('--priority <1-10>', 'Queue priority for API mode (1=low, 10=high)', '5')
   .option('--wait', 'Wait for job to complete in API mode')
@@ -233,6 +234,7 @@ program
       skipQA: opts.skipQa || false,
       style: opts.style,
       themeColor: opts.color,
+      exportPlatform: opts.export,
       onProgress: (event) => {
         const stepLabel = event.step.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
         const key = event.step

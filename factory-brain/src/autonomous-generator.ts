@@ -23,6 +23,7 @@ import { NicheMapper, NicheBlueprint } from './niche-mapper.js'
 import { logger } from './utils/logger.js'
 import { withRetry } from './utils/retry.js'
 import { costTracker } from './cost-tracker.js'
+import { factoryBilling, UsageRecord } from './factory-billing.js'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ export interface GenerateOptions {
   style?: string
   /** Requested primary color (e.g., #3b82f6) */
   themeColor?: string
+  /** Export to no-code platform */
+  exportPlatform?: string
   /** Callback for real-time progress updates */
   onProgress?: (event: ProgressEvent) => void
 }
@@ -61,6 +64,7 @@ export type GenerationStep =
   | 'architecture'
   | 'war-room'
   | 'assembly'
+  | 'export'
   | 'deployment'
   | 'learning'
 
@@ -93,6 +97,29 @@ export class AutonomousGenerator {
     this.log.info({ opts, sessionId }, 'Starting autonomous generation')
 
     try {
+      // ── Step 0: Billing Check ──────────────────────────────────────────────
+      // Mock usage record for demonstration (in a real app, fetch from DB)
+      const mockUsage: UsageRecord = {
+        userId: opts.orgId || 'cli-user',
+        planId: 'free',
+        periodStart: new Date(),
+        periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        exportsUsed: 0,
+        agentRunsUsed: 0,
+      }
+
+      const runCheck = factoryBilling.canPerformAction(mockUsage, 'agentRun')
+      if (!runCheck.allowed) {
+        throw new Error(`Billing limit reached: ${runCheck.reason}`)
+      }
+
+      if (opts.exportPlatform) {
+        const exportCheck = factoryBilling.canPerformAction(mockUsage, 'export')
+        if (!exportCheck.allowed) {
+          throw new Error(`Billing limit reached: ${exportCheck.reason}`)
+        }
+      }
+
       // ── Step 1: Niche Mapping ──────────────────────────────────────────────
       const blueprint = await this.runStep('niche-mapping', opts, async () => {
         if (opts.niche) {
@@ -147,6 +174,7 @@ export class AutonomousGenerator {
           const { LegalTermsGenerator } = await import('./legal-terms-generator.js')
           const { ThemeAgent } = await import('./theme-agent.js')
           const { PricingIntelligenceAgent } = await import('./pricing-intelligence-agent.js')
+          const { MirofishAgent } = await import('./mirofish-agent.js')
 
           // Build AgentContext from available data
           const context = {
@@ -163,12 +191,14 @@ export class AutonomousGenerator {
           const legalAgent = new LegalTermsGenerator()
           const themeAgent = new ThemeAgent(orchestrator)
           const pricingAgent = new PricingIntelligenceAgent(orchestrator)
+          const mirofishAgent = new MirofishAgent(orchestrator)
 
           const growthPlan: Record<string, unknown> = {}
           const complianceResult: Record<string, unknown> = {}
           const qaResult: Record<string, unknown> = {}
           const legalResult: Record<string, unknown> = {}
           const pricingResult: Record<string, unknown> = {}
+          const mirofishResult: Record<string, unknown> = {}
 
           await orchestrator.runFullPipeline({
             theme: {
@@ -262,6 +292,15 @@ export class AutonomousGenerator {
                 return result
               },
             },
+            marketSimulation: {
+              name: 'market-simulation',
+              run: async () => {
+                const result = await mirofishAgent.runSimulation(blueprint.niche, description, blueprint.features)
+                Object.assign(mirofishResult, result)
+                orchestrator.updateContext({ marketSimulation: result })
+                return result
+              },
+            },
             deploy: {
               name: 'deploy-prep',
               run: async () => {
@@ -270,13 +309,13 @@ export class AutonomousGenerator {
             },
           })
 
-          return { growthPlan, complianceResult, qaResult, legalResult, pricingResult, agentsRun: 5 }
+          return { growthPlan, complianceResult, qaResult, legalResult, pricingResult, mirofishResult, agentsRun: 6 }
         })
         this.emit(opts, 'war-room', 'completed',
-          `War Room complete: ${(warRoomResult as any).agentsRun || 5} agents finished`)
+          `War Room complete: ${(warRoomResult as any).agentsRun || 6} agents finished`)
       } catch (err) {
         this.log.warn({ err }, 'WarRoom failed, continuing with assembly')
-        warRoomResult = { growthPlan: null, legalDocs: null, qaTests: null, pricingResult: null }
+        warRoomResult = { growthPlan: null, legalDocs: null, qaTests: null, pricingResult: null, mirofishResult: null }
         this.emit(opts, 'war-room', 'completed', 'War Room partial (some agents failed)')
       }
 
@@ -291,6 +330,44 @@ export class AutonomousGenerator {
         })
       })
       this.emit(opts, 'assembly', 'completed', `App assembled at ${appPath}`)
+
+      // ── Step 4.5: Export (optional) ────────────────────────────────────────
+      if (opts.exportPlatform) {
+        try {
+          await this.runStep('export', opts, async () => {
+            const { FlutterFlowAdapter, BubbleAdapter, WebflowAdapter, RetoolAdapter, ZapierAdapter } = await import('./nocode-adapters/index.js')
+            
+            let adapter;
+            switch (opts.exportPlatform?.toLowerCase()) {
+              case 'flutterflow': adapter = new FlutterFlowAdapter(); break;
+              case 'bubble': adapter = new BubbleAdapter(); break;
+              case 'webflow': adapter = new WebflowAdapter(); break;
+              case 'retool': adapter = new RetoolAdapter(); break;
+              case 'zapier': adapter = new ZapierAdapter(); break;
+              default: throw new Error(`Unsupported export platform: ${opts.exportPlatform}`);
+            }
+
+            const exportResult = adapter.convert({
+              appName: opts.appName,
+              description,
+              sqlSchema: (architectResult.sqlSchema as string) || '',
+              apiSpec: JSON.stringify(architectResult.apiSpec || {}),
+              features: blueprint.coreFeatures,
+              pricingModel: 'Subscription',
+              techStack: blueprint.blocks
+            });
+
+            const exportPath = path.join(appPath, `export-${opts.exportPlatform}.${exportResult.format}`);
+            await fs.writeFile(exportPath, exportResult.content);
+            
+            return exportPath;
+          })
+          this.emit(opts, 'export', 'completed', `Exported to ${opts.exportPlatform}`)
+        } catch (err) {
+          this.log.warn({ err }, 'Export failed (non-fatal)')
+          this.emit(opts, 'export', 'failed', `Export to ${opts.exportPlatform} failed`)
+        }
+      }
 
       // ── Step 5: Deploy (optional) ──────────────────────────────────────────
       let deployUrl: string | undefined

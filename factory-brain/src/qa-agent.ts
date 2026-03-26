@@ -1,6 +1,10 @@
-import { getLLMClient, CLAUDE_MODELS } from './llm/client'
-import { AgentContext, AgentMessage } from './war-room-orchestrator';
-import { QA_AGENT_PROMPT } from './prompts/agent-prompts';
+import { AgentContext, AgentMessage } from './war-room-orchestrator.js';
+import { QA_AGENT_PROMPT } from './prompts/agent-prompts.js';
+import { getLLMClient, CLAUDE_MODELS } from './llm/client.js';
+// @ts-ignore
+import { ComputerUseOrchestrator } from '../../blocks/computer-use/src/orchestrator.js';
+// @ts-ignore
+import { AutomationTask } from '../../blocks/computer-use/src/types.js';
 
 interface GeneratedTheme {
   primaryColor: string;
@@ -69,6 +73,7 @@ interface QaAgentInput {
 interface GeneratedTests {
   playwrightTests: string;
   testSummary: string;
+  visualQaResults?: any;
 }
 
 export class QaAgent {
@@ -78,12 +83,44 @@ export class QaAgent {
 
   constructor(context: AgentContext | null = null) {
     this.llm = getLLMClient()
-    this.currentContext = context || { history: [] };
+    this.currentContext = context || {} as AgentContext;
   }
 
   private addMessage(sender: string, recipient: string, type: 'info' | 'request' | 'response', content: string) {
     this.warRoomMessages.push({ sender, recipient, type, content });
-    this.currentContext.history.push({ sender, recipient, type, content });
+  }
+
+  public async runVisualQA(url: string): Promise<any> {
+    this.addMessage('QaAgent', 'Orchestrator', 'info', `Starting visual QA on ${url}...`);
+    try {
+      const orchestrator = new ComputerUseOrchestrator(true, 'info');
+      await orchestrator.initialize();
+
+      const task: AutomationTask = {
+        taskId: `qa-${Date.now()}`,
+        name: 'Basic Visual QA',
+        application: 'browser',
+        steps: [
+          {
+            stepId: 'step-1',
+            description: 'Navigate to the generated app',
+            interactions: [{ type: 'click', target: { type: 'link', text: url } }]
+          },
+          {
+            stepId: 'step-2',
+            description: 'Take a screenshot of the landing page',
+            interactions: []
+          }
+        ]
+      };
+
+      const session = await orchestrator.executeTask(task);
+      this.addMessage('QaAgent', 'Orchestrator', 'response', 'Visual QA completed successfully.');
+      return session;
+    } catch (error) {
+      this.addMessage('QaAgent', 'Orchestrator', 'info', `Visual QA failed: ${error instanceof Error ? error.message : String(error)}`);
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   public async generateTests({
@@ -123,14 +160,13 @@ export class QaAgent {
     try {
       const response = await this.llm.chat({
         model: CLAUDE_MODELS.HAIKU, // Using a capable model for code generation
+        system: QA_AGENT_PROMPT + '\n\nYou are an expert QA Engineer generating Playwright tests.',
         messages: [
-          { role: 'system', content: QA_AGENT_PROMPT + '\n\nYou are an expert QA Engineer generating Playwright tests.' },
           { role: 'user', content: prompt },
         ],
-        response_format: { type: 'json_object' },
       });
 
-      const rawOutput = response.choices[0].message?.content;
+      const rawOutput = response.content;
       if (!rawOutput) {
         throw new Error('No output from OpenAI API for QA Agent.');
       }
@@ -140,7 +176,7 @@ export class QaAgent {
 
       return { tests: parsedOutput, messages: this.warRoomMessages, context: this.currentContext };
     } catch (error) {
-      this.addMessage('QaAgent', 'Orchestrator', 'error', `Failed to generate tests: ${error instanceof Error ? error.message : String(error)}`);
+      this.addMessage('QaAgent', 'Orchestrator', 'info', `Failed to generate tests: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }

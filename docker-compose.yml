@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  factory-control-center:
+    build:
+      context: .
+      dockerfile: Dockerfile.control-center
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL:-}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/factory-control-center/node_modules
+    command: pnpm --filter factory-control-center dev
+
+  # Optional: Local PostgreSQL if not using Supabase Cloud
+  # db:
+  #   image: postgres:15-alpine
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_DB=saas_factory
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
