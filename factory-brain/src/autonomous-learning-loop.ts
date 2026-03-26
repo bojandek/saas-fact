@@ -19,6 +19,8 @@ import { logger } from './utils/logger'
 import { withRetry } from './utils/retry'
 import * as fs from 'fs/promises'
 import * as path from 'path'
+import { MetaClawEngine } from './metaclaw/metaclaw-engine'
+import { SaaSGenome } from './metaclaw/types'
 
 const log = logger.child({ module: 'AutonomousLearningLoop' })
 
@@ -92,6 +94,7 @@ export class AutonomousLearningLoop {
   private patternsPath: string
   private knowledgePath: string
   private outcomesPath: string
+  private populationPath: string
   private patterns: Map<string, LearnedPattern> = new Map()
   private isRunning = false
 
@@ -101,6 +104,7 @@ export class AutonomousLearningLoop {
     this.patternsPath = path.join(baseDir, 'learned-patterns.json')
     this.knowledgePath = path.join(baseDir, 'agent-knowledge-updates.json')
     this.outcomesPath = path.join(baseDir, 'generation-outcomes.json')
+    this.populationPath = path.join(baseDir, 'metaclaw-population.json')
   }
 
   /**
@@ -147,10 +151,132 @@ export class AutonomousLearningLoop {
       await this.updateAgentKnowledge(highConfidencePatterns)
     }
 
+    // Integrate with MetaClaw Engine
+    await this.integrateWithMetaClaw(outcome)
+
     log.info(
       { total_patterns: this.patterns.size, high_confidence: highConfidencePatterns.length },
       'Learning cycle complete'
     )
+  }
+
+  /**
+   * Integrate with MetaClaw Engine to evolve the population based on outcomes.
+   */
+  private async integrateWithMetaClaw(outcome: GenerationOutcome): Promise<void> {
+    try {
+      // 1. Convert outcome to genome
+      const genome = this.createGenomeFromOutcome(outcome)
+      
+      // 2. Load existing population
+      let population: SaaSGenome[] = []
+      try {
+        const data = await fs.readFile(this.populationPath, 'utf-8')
+        population = JSON.parse(data)
+      } catch {
+        population = []
+      }
+      
+      population.push(genome)
+      
+      // 3. Run evolution every 5 outcomes or if we have enough
+      if (population.length >= 5 && population.length % 5 === 0) {
+        log.info('Triggering MetaClaw Evolution cycle...')
+        const engine = new MetaClawEngine(population)
+        const report = await engine.evolve()
+        
+        // 4. Convert MetaClaw improvements to LearnedPatterns
+        const newPatterns: LearnedPattern[] = report.improvements.map(imp => ({
+          id: `metaclaw-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          pattern_type: 'performance_tip',
+          description: `MetaClaw Evolution: ${imp.suggestion}. Expected improvement: +${imp.expectedImprovement}%`,
+          saas_categories: [],
+          confidence: 0.85,
+          occurrence_count: 1,
+          last_seen: new Date().toISOString(),
+          applied_to_agents: [],
+          example_generation_ids: [outcome.generation_id],
+        }))
+        
+        if (newPatterns.length > 0) {
+          await this.mergePatterns(newPatterns)
+          await this.updateAgentKnowledge(newPatterns)
+        }
+        
+        // Save evolved population
+        // @ts-ignore - accessing private property for persistence
+        await fs.writeFile(this.populationPath, JSON.stringify(engine.population.genomes, null, 2))
+        log.info({ generation: report.generation, improvements: report.improvements.length }, 'MetaClaw Evolution complete')
+      } else {
+        await fs.writeFile(this.populationPath, JSON.stringify(population, null, 2))
+      }
+    } catch (err) {
+      log.error({ err }, 'MetaClaw integration failed')
+    }
+  }
+
+  private createGenomeFromOutcome(outcome: GenerationOutcome): SaaSGenome {
+    // Calculate a rough fitness score based on outcome metrics
+    const performance = outcome.generation_time_ms > 0 ? Math.min(100, 100000 / outcome.generation_time_ms * 100) : 50
+    const userSatisfaction = (outcome.user_rating || 3) * 20
+    const featureCompleteness = Math.min(100, outcome.blocks_used.length * 10 + outcome.components_generated * 2)
+    const costEfficiency = 70 // placeholder
+    const innovationIndex = 60 // placeholder
+    
+    const overall = (performance * 0.3) + (userSatisfaction * 0.25) + (costEfficiency * 0.2) + (featureCompleteness * 0.15) + (innovationIndex * 0.1)
+
+    return {
+      id: outcome.generation_id,
+      appName: outcome.saas_description.split(' ')[0] || 'app',
+      version: 1,
+      architecture: {
+        techStack: ['Next.js', 'PostgreSQL', 'Tailwind'],
+        apiStyle: 'REST',
+        databasePattern: 'Monolith',
+        cachingStrategy: 'Browser',
+        messageQueue: 'None',
+      },
+      features: {
+        enabled: outcome.blocks_used,
+        versions: {},
+        experiments: [],
+      },
+      performance: {
+        cachePolicy: { ttl: 60, strategy: 'LRU', distributed: false, compressionLevel: 1 },
+        rateLimits: [],
+        dbIndices: [],
+        asyncJobs: [],
+        cdn: false,
+        edgeComputing: false,
+      },
+      monetization: {
+        pricingModel: 'Freemium',
+        tierConfig: [],
+        paymentGateway: 'stripe',
+        trialDays: 14,
+      },
+      ux: {
+        components: { designSystem: 'default', componentCount: 0, customComponents: [], animationLevel: 'None' },
+        workflows: [],
+        designSystem: { 
+          theme: 'Auto', 
+          colorScheme: 'default', 
+          typography: { headingFont: 'sans', bodyFont: 'sans', monoFont: 'mono', baseFontSize: 16 }, 
+          spacing: { scale: [4, 8, 16, 24], baseline: 4 } 
+        },
+        mobileOptimized: true,
+      },
+      fitness: {
+        performance,
+        userSatisfaction,
+        costEfficiency,
+        featureCompleteness,
+        innovationIndex,
+        overall,
+      },
+      createdAt: new Date(),
+      generation: 1,
+    }
   }
 
   /**
@@ -201,7 +327,7 @@ JSON only, no markdown.`
         description: string
         saas_categories: string[]
         confidence: number
-      }> = Array.isArray(parsed) ? parsed : (parsed.patterns ?? [])
+      }> = Array.isArray(parsed) ? parsed : ((parsed as any).patterns ?? [])
 
       return rawPatterns.map(p => ({
         id: `pattern-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

@@ -146,6 +146,7 @@ export class AutonomousGenerator {
           const { QaAgent } = await import('./qa-agent.js')
           const { LegalTermsGenerator } = await import('./legal-terms-generator.js')
           const { ThemeAgent } = await import('./theme-agent.js')
+          const { PricingIntelligenceAgent } = await import('./pricing-intelligence-agent.js')
 
           // Build AgentContext from available data
           const context = {
@@ -161,11 +162,13 @@ export class AutonomousGenerator {
           const qaAgent = new QaAgent()
           const legalAgent = new LegalTermsGenerator()
           const themeAgent = new ThemeAgent(orchestrator)
+          const pricingAgent = new PricingIntelligenceAgent(orchestrator)
 
           const growthPlan: Record<string, unknown> = {}
           const complianceResult: Record<string, unknown> = {}
           const qaResult: Record<string, unknown> = {}
           const legalResult: Record<string, unknown> = {}
+          const pricingResult: Record<string, unknown> = {}
 
           await orchestrator.runFullPipeline({
             theme: {
@@ -250,6 +253,15 @@ export class AutonomousGenerator {
                 return result
               },
             },
+            pricingStrategy: {
+              name: 'pricing-strategy',
+              run: async () => {
+                const result = await pricingAgent.generatePricingStrategy(blueprint.niche, description)
+                Object.assign(pricingResult, result)
+                orchestrator.updateContext({ pricingStrategy: result })
+                return result
+              },
+            },
             deploy: {
               name: 'deploy-prep',
               run: async () => {
@@ -258,13 +270,13 @@ export class AutonomousGenerator {
             },
           })
 
-          return { growthPlan, complianceResult, qaResult, legalResult, agentsRun: 4 }
+          return { growthPlan, complianceResult, qaResult, legalResult, pricingResult, agentsRun: 5 }
         })
         this.emit(opts, 'war-room', 'completed',
-          `War Room complete: ${(warRoomResult as any).agentsRun || 4} agents finished`)
+          `War Room complete: ${(warRoomResult as any).agentsRun || 5} agents finished`)
       } catch (err) {
         this.log.warn({ err }, 'WarRoom failed, continuing with assembly')
-        warRoomResult = { growthPlan: null, legalDocs: null, qaTests: null }
+        warRoomResult = { growthPlan: null, legalDocs: null, qaTests: null, pricingResult: null }
         this.emit(opts, 'war-room', 'completed', 'War Room partial (some agents failed)')
       }
 
