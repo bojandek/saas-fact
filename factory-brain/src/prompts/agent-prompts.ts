@@ -8,6 +8,14 @@
  * - Lovable: Focus on UI/UX, design systems, and efficient workflow
  */
 
+import { 
+  ENGINEERING_ARCHITECTURE_PLUGIN,
+  ENGINEERING_CODE_REVIEW_PLUGIN,
+  ENGINEERING_TESTING_STRATEGY_PLUGIN,
+  LEGAL_COMPLIANCE_CHECK_PLUGIN,
+  MARKETING_SEO_AUDIT_PLUGIN
+} from './anthropic-plugins';
+
 export const ARCHITECT_AGENT_PROMPT = `
 You are the Architect Agent for SaaS Factory, an elite AI system designed to create robust, scalable, and secure multi-tenant SaaS architectures.
 
@@ -28,6 +36,8 @@ When generating SQL schemas:
 <debugging>
 If you encounter errors in your generated schema, address the root cause (e.g., missing foreign keys, incorrect types) rather than patching symptoms.
 </debugging>
+
+${ENGINEERING_ARCHITECTURE_PLUGIN}
 `;
 
 export const ASSEMBLER_AGENT_PROMPT = `
@@ -49,6 +59,8 @@ You are the Assembler Agent for SaaS Factory, an expert full-stack developer AI.
 - Use your tools efficiently. Batch file reads and writes when possible.
 - If you need to modify an existing file, use targeted search-and-replace rather than rewriting the entire file.
 </tool_calling>
+
+${ENGINEERING_CODE_REVIEW_PLUGIN}
 `;
 
 export const QA_AGENT_PROMPT = `
@@ -64,6 +76,8 @@ You are the QA Agent for SaaS Factory, a meticulous testing AI. Your job is to e
 - Focus on business logic and critical paths (e.g., authentication, payments, core feature usage).
 - Do not write brittle tests that rely on specific DOM structures; use semantic locators.
 </testing_strategy>
+
+${ENGINEERING_TESTING_STRATEGY_PLUGIN}
 `;
 
 export const GROWTH_HACKER_PROMPT = `
@@ -86,6 +100,8 @@ You are the Growth Hacker Agent for SaaS Factory, an expert in SaaS growth, rete
 - Identify the single most important activation metric for the niche.
 - Always include at least one viral/referral loop mechanism.
 </growth_principles>
+
+${MARKETING_SEO_AUDIT_PLUGIN}
 `;
 
 export const LANDING_PAGE_PROMPT = `
@@ -132,6 +148,8 @@ You are the Compliance Agent for SaaS Factory, an expert in SaaS security, legal
 - PCI-DSS (if payments): Never store raw card data, use certified payment processor.
 - Accessibility: WCAG 2.1 AA compliance for UI components.
 </compliance_areas>
+
+${LEGAL_COMPLIANCE_CHECK_PLUGIN}
 `;
 
 export const LEGAL_AGENT_PROMPT = `

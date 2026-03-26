@@ -36,6 +36,7 @@ export interface AgentContext {
   blueprint?: unknown
   landingPage?: unknown
   growthPlan?: unknown
+  marketResearch?: unknown
   complianceChecks?: unknown
   qaResults?: unknown
   legalDocs?: unknown
