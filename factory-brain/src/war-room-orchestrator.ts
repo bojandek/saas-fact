@@ -42,6 +42,7 @@ export interface AgentContext {
   legalDocs?: unknown
   deploymentResult?: unknown
   pricingStrategy?: unknown
+  marketSimulation?: unknown
 }
 
 export interface AgentTask<T> {
@@ -228,12 +229,13 @@ export class WarRoomOrchestrator {
     theme: AgentTask<unknown>
     blueprint: AgentTask<unknown>
     landingPage: AgentTask<unknown>
-    // These 5 run in parallel after landing page is ready
+    // These 6 run in parallel after landing page is ready
     growthPlan: AgentTask<unknown>
     compliance: AgentTask<unknown>
     qaTests: AgentTask<unknown>
     legalDocs: AgentTask<unknown>
     pricingStrategy: AgentTask<unknown>
+    marketSimulation: AgentTask<unknown>
     deploy: AgentTask<unknown>
   }): Promise<void> {
     this.log.info('Starting full SaaS generation pipeline')
@@ -246,13 +248,14 @@ export class WarRoomOrchestrator {
     ])
 
     // Stage 2: Parallel (all independent of each other)
-    this.log.info('Starting parallel stage: growth, compliance, QA, legal, pricing')
+    this.log.info('Starting parallel stage: growth, compliance, QA, legal, pricing, market simulation')
     const parallelResults = await this.orchestrateParallel([
       pipelineAgents.growthPlan,
       pipelineAgents.compliance,
       pipelineAgents.qaTests,
       pipelineAgents.legalDocs,
       pipelineAgents.pricingStrategy,
+      pipelineAgents.marketSimulation,
     ])
 
     const failures = parallelResults.filter((r) => r.status === 'rejected')

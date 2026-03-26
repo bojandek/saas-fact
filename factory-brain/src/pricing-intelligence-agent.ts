@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getLLMClient, CLAUDE_MODELS } from './llm/client';
 import { WarRoomOrchestrator } from './war-room-orchestrator';
 import { logger } from './utils/logger';

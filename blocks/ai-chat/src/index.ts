@@ -61,27 +61,61 @@ export class AIChat {
 
     this.history.push({ role: 'user', content: userMessage });
 
-    // Simulate OpenAI API call and streaming response
-    // In a real scenario, you would use the OpenAI SDK here:
-    const llm = getLLMClient()
-    // const stream = await llm.chat({
-    //   model: 'gpt-4o-mini',
-    //   messages: this.history,
-    //   stream: true,
-    // });
+    // Use the global fetch API to call OpenAI directly without needing the SDK dependency
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: this.history,
+        stream: true
+      })
+    });
 
-    // For demonstration, we'll simulate a streaming response.
-    const simulatedResponse = "Hello there! I am a friendly AI assistant. How can I help you today?";
-    let assistantResponseContent = '';
-
-    for (let i = 0; i < simulatedResponse.length; i++) {
-      const char = simulatedResponse[i];
-      assistantResponseContent += char;
-      yield char; // Yield each character as a stream chunk
-      await new Promise(resolve => setTimeout(resolve, 10)); // Simulate network delay
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
 
-    this.history.push({ role: 'assistant', content: assistantResponseContent });
+    if (!response.body) {
+      throw new Error('No response body from OpenAI API');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let assistantResponseContent = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line === 'data: [DONE]') return;
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              const content = data.choices[0]?.delta?.content || '';
+              if (content) {
+                assistantResponseContent += content;
+                yield content;
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+      this.history.push({ role: 'assistant', content: assistantResponseContent });
+    }
   }
 
   /**

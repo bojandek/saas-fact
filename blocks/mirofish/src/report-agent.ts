@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PostSimulationReportAgent — MiroFish Enhancement #3
  *

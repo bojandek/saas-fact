@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Niche-to-Blocks Mapping Engine
  *

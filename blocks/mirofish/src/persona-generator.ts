@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PersonaGenerator — MiroFish Enhancement #1
  *

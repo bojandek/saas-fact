@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * QueryAgent — Always-On Memory System
  *

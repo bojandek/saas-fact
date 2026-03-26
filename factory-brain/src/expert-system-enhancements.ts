@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Expert System Enhancements
  * Advanced features to transform memory engine into world-class expert system

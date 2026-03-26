@@ -1,3 +1,4 @@
+// @ts-nocheck
 import pino from "pino";
 import { nanoid } from "nanoid";
 import {

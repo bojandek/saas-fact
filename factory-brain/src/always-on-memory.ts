@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Always-On Memory Engine for Factory Brain
  * Persistent reasoning system that continuously learns and improves

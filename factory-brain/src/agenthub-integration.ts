@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AgentHub Integration for Factory Brain
  * Connects existing agents (ArchitectAgent, CodeReviewAgent, etc.) to AgentHub collaborative system

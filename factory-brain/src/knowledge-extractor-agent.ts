@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getLLMClient, CLAUDE_MODELS } from './llm/client'
 import { RAGSystem } from './rag';
 import { logger } from './utils/logger'

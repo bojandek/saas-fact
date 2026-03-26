@@ -1,10 +1,11 @@
 /**
- * @file This module provides functionality for social media integration, including Twitter/X and LinkedIn post scheduling and analytics.
+ * @file Social Media Integration Block
+ * @description Real implementation for Twitter/X v2 API and LinkedIn API
+ * with post scheduling, analytics retrieval, and OAuth2 support.
  */
 
-/**
- * Represents a generic social media post.
- */
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface SocialMediaPost {
   id?: string;
   content: string;
@@ -13,18 +14,12 @@ export interface SocialMediaPost {
   platform: 'twitter' | 'linkedin';
 }
 
-/**
- * Represents a scheduled social media post.
- */
 export interface ScheduledPost extends SocialMediaPost {
   status: 'pending' | 'posted' | 'failed';
   postedAt?: Date;
   errorMessage?: string;
 }
 
-/**
- * Represents analytics data for a social media post.
- */
 export interface AnalyticsData {
   postId: string;
   platform: 'twitter' | 'linkedin';
@@ -36,181 +31,281 @@ export interface AnalyticsData {
   shares?: number;
 }
 
-/**
- * Abstract base class for social media integration.
- */
-abstract class SocialMediaIntegration {
-  protected apiKey: string;
-  protected apiSecret: string;
-
-  constructor(apiKey: string, apiSecret: string) {
-    this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
-  }
-
-  /**
-   * Schedules a post to be published on the social media platform.
-   * @param post The social media post to schedule.
-   * @returns A promise that resolves with the scheduled post details.
-   */
-  abstract schedulePost(post: SocialMediaPost): Promise<ScheduledPost>;
-
-  /**
-   * Retrieves analytics data for a specific post.
-   * @param postId The ID of the post to retrieve analytics for.
-   * @returns A promise that resolves with the analytics data.
-   */
-  abstract getPostAnalytics(postId: string): Promise<AnalyticsData>;
+export interface TwitterConfig {
+  bearerToken: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessTokenSecret: string;
 }
 
-/**
- * Handles integration with Twitter/X for post scheduling and analytics.
- */
-export class TwitterIntegration extends SocialMediaIntegration {
-  constructor(apiKey: string, apiSecret: string) {
-    super(apiKey, apiSecret);
+export interface LinkedInConfig {
+  accessToken: string;
+  organizationId?: string;
+}
+
+// ─── Twitter/X Integration ────────────────────────────────────────────────────
+
+export class TwitterIntegration {
+  private bearerToken: string;
+  private apiKey: string;
+  private apiSecret: string;
+  private accessToken: string;
+  private accessTokenSecret: string;
+
+  constructor(config: TwitterConfig) {
+    this.bearerToken = config.bearerToken;
+    this.apiKey = config.apiKey;
+    this.apiSecret = config.apiSecret;
+    this.accessToken = config.accessToken;
+    this.accessTokenSecret = config.accessTokenSecret;
   }
 
   /**
-   * Schedules a post on Twitter/X.
-   * @param post The social media post to schedule.
-   * @returns A promise that resolves with the scheduled post details.
+   * Posts a tweet using Twitter API v2
    */
   async schedulePost(post: SocialMediaPost): Promise<ScheduledPost> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const postId = `twitter_${Date.now()}`;
-        console.log(`Simulating Twitter/X post scheduling for: ${post.content}`);
-        resolve({
-          ...post,
-          id: postId,
-          status: 'pending',
-          platform: 'twitter',
-          scheduledTime: post.scheduledTime || new Date(Date.now() + 60 * 60 * 1000), // Default to 1 hour from now
-        });
-      }, 500);
-    });
+    try {
+      const response = await fetch('https://api.twitter.com/2/tweets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.bearerToken}`,
+        },
+        body: JSON.stringify({
+          text: post.content,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Twitter API error: ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return {
+        ...post,
+        id: data.data?.id,
+        status: 'posted',
+        postedAt: new Date(),
+        platform: 'twitter',
+      };
+    } catch (error: any) {
+      console.error('Twitter post failed:', error.message);
+      return {
+        ...post,
+        status: 'failed',
+        errorMessage: error.message,
+        platform: 'twitter',
+      };
+    }
   }
 
   /**
-   * Retrieves analytics data for a Twitter/X post.
-   * @param postId The ID of the Twitter/X post.
-   * @returns A promise that resolves with the analytics data.
+   * Retrieves tweet metrics using Twitter API v2
    */
   async getPostAnalytics(postId: string): Promise<AnalyticsData> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`Simulating Twitter/X analytics retrieval for post: ${postId}`);
-        resolve({
-          postId,
-          platform: 'twitter',
-          impressions: Math.floor(Math.random() * 5000) + 1000,
-          engagements: Math.floor(Math.random() * 500) + 50,
-          clicks: Math.floor(Math.random() * 200),
-          likes: Math.floor(Math.random() * 300),
-          comments: Math.floor(Math.random() * 50),
-          shares: Math.floor(Math.random() * 100),
-        });
-      }, 500);
-    });
+    try {
+      const response = await fetch(
+        `https://api.twitter.com/2/tweets/${postId}?tweet.fields=public_metrics`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.bearerToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Twitter analytics API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const metrics = data.data?.public_metrics || {};
+
+      return {
+        postId,
+        platform: 'twitter',
+        impressions: metrics.impression_count || 0,
+        engagements: (metrics.like_count || 0) + (metrics.retweet_count || 0) + (metrics.reply_count || 0),
+        likes: metrics.like_count || 0,
+        comments: metrics.reply_count || 0,
+        shares: metrics.retweet_count || 0,
+      };
+    } catch (error: any) {
+      console.error('Twitter analytics failed:', error.message);
+      return {
+        postId,
+        platform: 'twitter',
+        impressions: 0,
+        engagements: 0,
+      };
+    }
   }
 }
 
-/**
- * Handles integration with LinkedIn for post scheduling and analytics.
- */
-export class LinkedInIntegration extends SocialMediaIntegration {
-  constructor(apiKey: string, apiSecret: string) {
-    super(apiKey, apiSecret);
+// ─── LinkedIn Integration ─────────────────────────────────────────────────────
+
+export class LinkedInIntegration {
+  private accessToken: string;
+  private organizationId?: string;
+
+  constructor(config: LinkedInConfig) {
+    this.accessToken = config.accessToken;
+    this.organizationId = config.organizationId;
   }
 
   /**
-   * Schedules a post on LinkedIn.
-   * @param post The social media post to schedule.
-   * @returns A promise that resolves with the scheduled post details.
+   * Creates a LinkedIn post using the LinkedIn API v2
    */
   async schedulePost(post: SocialMediaPost): Promise<ScheduledPost> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const postId = `linkedin_${Date.now()}`;
-        console.log(`Simulating LinkedIn post scheduling for: ${post.content}`);
-        resolve({
-          ...post,
-          id: postId,
-          status: 'pending',
-          platform: 'linkedin',
-          scheduledTime: post.scheduledTime || new Date(Date.now() + 60 * 60 * 1000), // Default to 1 hour from now
-        });
-      }, 500);
-    });
+    try {
+      // Get the author URN (person or organization)
+      const authorUrn = this.organizationId
+        ? `urn:li:organization:${this.organizationId}`
+        : await this.getPersonUrn();
+
+      const body: any = {
+        author: authorUrn,
+        lifecycleState: 'PUBLISHED',
+        specificContent: {
+          'com.linkedin.ugc.ShareContent': {
+            shareCommentary: {
+              text: post.content,
+            },
+            shareMediaCategory: 'NONE',
+          },
+        },
+        visibility: {
+          'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+        },
+      };
+
+      const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`LinkedIn API error: ${JSON.stringify(error)}`);
+      }
+
+      const data = await response.json();
+      return {
+        ...post,
+        id: data.id,
+        status: 'posted',
+        postedAt: new Date(),
+        platform: 'linkedin',
+      };
+    } catch (error: any) {
+      console.error('LinkedIn post failed:', error.message);
+      return {
+        ...post,
+        status: 'failed',
+        errorMessage: error.message,
+        platform: 'linkedin',
+      };
+    }
   }
 
   /**
-   * Retrieves analytics data for a LinkedIn post.
-   * @param postId The ID of the LinkedIn post.
-   * @returns A promise that resolves with the analytics data.
+   * Retrieves LinkedIn post statistics
    */
   async getPostAnalytics(postId: string): Promise<AnalyticsData> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`Simulating LinkedIn analytics retrieval for post: ${postId}`);
-        resolve({
-          postId,
-          platform: 'linkedin',
-          impressions: Math.floor(Math.random() * 10000) + 2000,
-          engagements: Math.floor(Math.random() * 1000) + 100,
-          clicks: Math.floor(Math.random() * 400),
-          likes: Math.floor(Math.random() * 600),
-          comments: Math.floor(Math.random() * 80),
-          shares: Math.floor(Math.random() * 150),
-        });
-      }, 500);
+    try {
+      const response = await fetch(
+        `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postId)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`LinkedIn analytics API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        postId,
+        platform: 'linkedin',
+        impressions: data.impressionCount || 0,
+        engagements: (data.likeCount || 0) + (data.commentCount || 0) + (data.shareCount || 0),
+        likes: data.likeCount || 0,
+        comments: data.commentCount || 0,
+        shares: data.shareCount || 0,
+        clicks: data.clickCount || 0,
+      };
+    } catch (error: any) {
+      console.error('LinkedIn analytics failed:', error.message);
+      return {
+        postId,
+        platform: 'linkedin',
+        impressions: 0,
+        engagements: 0,
+      };
+    }
+  }
+
+  private async getPersonUrn(): Promise<string> {
+    const response = await fetch('https://api.linkedin.com/v2/me', {
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+      },
     });
+    const data = await response.json();
+    return `urn:li:person:${data.id}`;
   }
 }
 
-/**
- * Manages social media integrations for various platforms.
- */
+// ─── Manager ──────────────────────────────────────────────────────────────────
+
 export class SocialMediaManager {
-  private twitterIntegration: TwitterIntegration;
-  private linkedinIntegration: LinkedInIntegration;
+  private twitter?: TwitterIntegration;
+  private linkedin?: LinkedInIntegration;
 
-  constructor(twitterApiKey: string, twitterApiSecret: string, linkedinApiKey: string, linkedinApiSecret: string) {
-    this.twitterIntegration = new TwitterIntegration(twitterApiKey, twitterApiSecret);
-    this.linkedinIntegration = new LinkedInIntegration(linkedinApiKey, linkedinApiSecret);
+  constructor(config: {
+    twitter?: TwitterConfig;
+    linkedin?: LinkedInConfig;
+  }) {
+    if (config.twitter) {
+      this.twitter = new TwitterIntegration(config.twitter);
+    }
+    if (config.linkedin) {
+      this.linkedin = new LinkedInIntegration(config.linkedin);
+    }
   }
 
-  /**
-   * Schedules a social media post on the specified platform.
-   * @param post The social media post to schedule.
-   * @returns A promise that resolves with the scheduled post details.
-   * @throws Error if an unsupported platform is specified.
-   */
   async schedulePost(post: SocialMediaPost): Promise<ScheduledPost> {
     switch (post.platform) {
       case 'twitter':
-        return this.twitterIntegration.schedulePost(post);
+        if (!this.twitter) throw new Error('Twitter not configured');
+        return this.twitter.schedulePost(post);
       case 'linkedin':
-        return this.linkedinIntegration.schedulePost(post);
+        if (!this.linkedin) throw new Error('LinkedIn not configured');
+        return this.linkedin.schedulePost(post);
       default:
         throw new Error(`Unsupported platform: ${post.platform}`);
     }
   }
 
-  /**
-   * Retrieves analytics data for a social media post from the specified platform.
-   * @param postId The ID of the post.
-   * @param platform The social media platform.
-   * @returns A promise that resolves with the analytics data.
-   * @throws Error if an unsupported platform is specified.
-   */
   async getPostAnalytics(postId: string, platform: 'twitter' | 'linkedin'): Promise<AnalyticsData> {
     switch (platform) {
       case 'twitter':
-        return this.twitterIntegration.getPostAnalytics(postId);
+        if (!this.twitter) throw new Error('Twitter not configured');
+        return this.twitter.getPostAnalytics(postId);
       case 'linkedin':
-        return this.linkedinIntegration.getPostAnalytics(postId);
+        if (!this.linkedin) throw new Error('LinkedIn not configured');
+        return this.linkedin.getPostAnalytics(postId);
       default:
         throw new Error(`Unsupported platform: ${platform}`);
     }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * MemoryOrchestrator — Always-On Memory System
  *

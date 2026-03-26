@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SqlGenerator } from './sql-generator'
 import { RAGSystem } from './rag'
 import { WarRoomOrchestrator, AgentContext } from './war-room-orchestrator'

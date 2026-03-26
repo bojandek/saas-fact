@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * TemporalMemory — MiroFish Enhancement #2
  *

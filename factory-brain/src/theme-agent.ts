@@ -684,7 +684,7 @@ Output this exact JSON structure (no other text):
         ],
         system: systemPrompt,
         temperature: 0.4,
-        max_tokens: 1500,
+        maxTokens: 1500,
       })
 
       const raw = response.content?.trim() ?? ''

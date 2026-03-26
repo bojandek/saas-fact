@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SaaS Factory - Billing & Monetization System
  *

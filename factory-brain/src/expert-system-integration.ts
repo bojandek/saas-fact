@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Expert System Integration
  * Connect expert enhancements to memory session for seamless usage

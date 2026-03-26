@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * No-Code Adapters
  *

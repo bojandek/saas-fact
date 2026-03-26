@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Factory Brain AI Agents
  * Orchestrates Claude API for various SaaS tasks

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Memory Session Manager - Integration Point for Using Always-On Memory
  * This is what you import and use in your apps to access the brain

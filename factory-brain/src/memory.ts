@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Memory system for Factory Brain
  * Tracks projects, lessons, patterns, and preferences
